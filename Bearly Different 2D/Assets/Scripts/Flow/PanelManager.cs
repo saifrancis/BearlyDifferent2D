@@ -37,6 +37,9 @@ public class PanelManager : MonoBehaviour
 
     private string chosenScene;
 
+    // reference to accelerometer script for subscribe and unsubscribe
+    private AccelerometerPos accRef;
+
     void Start()
     {
         if (useZoomTransition && zoomPanelIndex >= 0 && zoomPanelIndex < panels.Length)
@@ -52,7 +55,42 @@ public class PanelManager : MonoBehaviour
         if (choiceUI != null)
             choiceUI.SetActive(false);
 
+        // subscribe to pose events
+        accRef = FindObjectOfType<AccelerometerPos>();
+        if (accRef != null)
+        {
+            accRef.OnPose += OnAccelPose;
+        }
+        else
+        {
+            Debug.LogWarning("No AccelerometerPos found in scene");
+        }
+
         UpdatePanels();
+    }
+
+    void OnDestroy()
+    {
+        if (accRef != null)
+        {
+            accRef.OnPose -= OnAccelPose;
+        }
+    }
+
+    private void OnAccelPose(string pose)
+    {
+        if (isZoomedIn) return;
+
+        // only act on left and right
+        if (pose == "RIGHT")
+        {
+            GoNext();
+        }
+        else if (pose == "LEFT")
+        {
+            GoPrev();
+        }
+        // DOWN and NEUTRAL do nothing here
     }
 
     void Update()
@@ -171,7 +209,6 @@ public class PanelManager : MonoBehaviour
         }
     }
 
-
     IEnumerator ZoomOut()
     {
         Vector2 startMin = zoomingPanel.anchorMin;
@@ -210,5 +247,21 @@ public class PanelManager : MonoBehaviour
         {
             SceneManager.LoadScene(nextSceneName);
         }
+    }
+
+    public void GoNext()
+    {
+        if (isZoomedIn) return;
+        currentIndex = (currentIndex + 1) % panels.Length;
+        CheckForTransition();
+        UpdatePanels();
+    }
+
+    public void GoPrev()
+    {
+        if (isZoomedIn) return;
+        currentIndex = (currentIndex - 1 + panels.Length) % panels.Length;
+        CheckForTransition();
+        UpdatePanels();
     }
 }
