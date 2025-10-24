@@ -156,11 +156,10 @@ MonoBehaviour:
   - {fileID: 750879045}
   - {fileID: 1665607794}
   - {fileID: 1154746584}
-  - {fileID: 1422159587}
   activeColor: {r: 0, g: 0, b: 1, a: 1}
   inactiveColor: {r: 1, g: 1, b: 1, a: 1}
   useZoomTransition: 1
-  zoomPanelIndex: 3
+  zoomPanelIndex: 2
   zoomDuration: 1.5
   autoTransitionDelay: 2
   nextSceneName: 2MiniGame_1
@@ -303,8 +302,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -593.7109, y: 1.5887451}
-  m_SizeDelta: {x: -1212.8413, y: -28.5966}
+  m_AnchoredPosition: {x: -505.9831, y: 247.73999}
+  m_SizeDelta: {x: -1037.3856, y: -520.9}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &750879047
 MonoBehaviour:
@@ -378,7 +377,6 @@ RectTransform:
   - {fileID: 750879046}
   - {fileID: 1665607795}
   - {fileID: 1154746585}
-  - {fileID: 1422159590}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -483,8 +481,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 95.9133, y: -287.71}
-  m_SizeDelta: {x: -1286.2333, y: -607.18}
+  m_AnchoredPosition: {x: 546.5231, y: 1.585022}
+  m_SizeDelta: {x: -1115.3745, y: -28.59}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1154746586
 MonoBehaviour:
@@ -524,82 +522,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1154746584}
   m_CullTransparentMesh: 1
---- !u!1 &1422159587
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1422159590}
-  - component: {fileID: 1422159589}
-  - component: {fileID: 1422159588}
-  m_Layer: 5
-  m_Name: Panel4
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1422159588
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1422159587}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!222 &1422159589
-CanvasRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1422159587}
-  m_CullTransparentMesh: 1
---- !u!224 &1422159590
-RectTransform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1422159587}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1064505401}
-  m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 689.62946, y: -287.70996}
-  m_SizeDelta: {x: -1404.6686, y: -607.18}
-  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1527071048
 GameObject:
   m_ObjectHideFlags: 0
@@ -703,8 +625,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 363.17102, y: 247.74512}
-  m_SizeDelta: {x: -751.7611, y: -520.9082}
+  m_AnchoredPosition: {x: -724.91, y: -287.71}
+  m_SizeDelta: {x: -1475.2329, y: -607.18}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1665607796
 MonoBehaviour:
