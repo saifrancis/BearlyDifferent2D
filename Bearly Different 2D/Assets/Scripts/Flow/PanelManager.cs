@@ -15,7 +15,7 @@ public class PanelManager : MonoBehaviour
     public int zoomPanelIndex = 3;
     public float zoomDuration = 1f;
     public float autoTransitionDelay = 2f;
-    public float waitBeforeZoom = 2f; 
+    public float waitBeforeZoom = 2f;
 
     [Header("Scene Flow")]
     public string nextSceneName;
@@ -35,6 +35,10 @@ public class PanelManager : MonoBehaviour
     private Vector2 originalPivot;
     private bool isZoomedIn = false;
     private string chosenScene;
+
+    [Header("Glove Control")]
+    [Tooltip("When enabled, LEFT/RIGHT poses from AccelerometerPos will navigate panels.")]
+    public bool useGloveInput = true;
 
     // reference to accelerometer script for subscribe and unsubscribe
     private AccelerometerPos accRef;
@@ -67,21 +71,25 @@ public class PanelManager : MonoBehaviour
             originalPivot = zoomingPanel.pivot;
         }
 
-        if (choiceUI != null)
-            choiceUI.SetActive(false);
+        if (panels.Length > 0)
+        {
+            currentIndex = 0;
+            StartCoroutine(FadeInPanel(panels[0]));
+        }
 
         // subscribe to pose events
-        accRef = FindObjectOfType<AccelerometerPos>();
-        if (accRef != null)
+        if (useGloveInput)
         {
-            accRef.OnPose += OnAccelPose;
+            accRef = FindObjectOfType<AccelerometerPos>();
+            if (accRef != null)
+            {
+                accRef.OnPose += OnAccelPose;
+            }
+            else
+            {
+                Debug.LogWarning("No AccelerometerPos found in scene");
+            }
         }
-        else
-        {
-            Debug.LogWarning("No AccelerometerPos found in scene");
-        }
-
-        UpdatePanels();
     }
 
     void OnDestroy()
@@ -94,23 +102,19 @@ public class PanelManager : MonoBehaviour
 
     private void OnAccelPose(string pose)
     {
+        if (!useGloveInput) return;
         if (isZoomedIn) return;
 
         // only act on left and right
         if (pose == "RIGHT")
         {
-            GoNext();
+            ShowNextPanel();
         }
         else if (pose == "LEFT")
         {
-            GoPrev();
+            ShowPreviousPanel();
         }
         // DOWN and NEUTRAL do nothing here
-        if (panels.Length > 0)
-        {
-            currentIndex = 0;
-            StartCoroutine(FadeInPanel(panels[0]));
-        }
     }
 
     void Update()
@@ -140,7 +144,7 @@ public class PanelManager : MonoBehaviour
         if (currentIndex < panels.Length - 1)
         {
             currentIndex++;
-            StartCoroutine(FadeInPanel(panels[currentIndex]));
+            StartCoroutine(FadeInPanel(panels[currentIndex])); // keep your fade-in-only logic
             CheckForTransition();
         }
     }
@@ -150,6 +154,8 @@ public class PanelManager : MonoBehaviour
         if (currentIndex > 0)
         {
             currentIndex--;
+            // keep behaviour consistent: only fade in the newly selected panel
+            StartCoroutine(FadeInPanel(panels[currentIndex]));
         }
     }
 
@@ -237,7 +243,7 @@ public class PanelManager : MonoBehaviour
             yield return null;
         }
 
-        yield return new WaitForSeconds(2f); 
+        yield return new WaitForSeconds(2f);
 
         if (!string.IsNullOrEmpty(targetScene))
         {
@@ -280,21 +286,5 @@ public class PanelManager : MonoBehaviour
         {
             SceneManager.LoadScene(nextSceneName);
         }
-    }
-
-    public void GoNext()
-    {
-        if (isZoomedIn) return;
-        currentIndex = (currentIndex + 1) % panels.Length;
-        CheckForTransition();
-        UpdatePanels();
-    }
-
-    public void GoPrev()
-    {
-        if (isZoomedIn) return;
-        currentIndex = (currentIndex - 1 + panels.Length) % panels.Length;
-        CheckForTransition();
-        UpdatePanels();
     }
 }

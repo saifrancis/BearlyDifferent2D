@@ -12,7 +12,7 @@ public class AccelerometerPos : MonoBehaviour
 {
     [Header("Serial")]
     public string portName = "COM3";
-    public int baudRate = 115200;
+    public int baudRate = 9600;
     [Tooltip("True for ax,ay,az lines. False for labeled lines like X: aY: bZ: cm/s^2")]
     public bool expectsCsv = false;
 
@@ -24,7 +24,7 @@ public class AccelerometerPos : MonoBehaviour
 
     [Header("Matching")]
     [Tooltip("Allowed absolute difference on each axis")]
-    public float tolerance = 1.2f;
+    public float tolerance;
     [Range(0f, 1f)] public float alpha = 0.35f;
     [Tooltip("Time the pose must be held to fire")]
     public float dwellTime = 0.12f;

@@ -169,6 +169,7 @@ MonoBehaviour:
   choice1Scene: 
   choice2Scene: 
   choice3Scene: 
+  useGloveInput: 1
 --- !u!4 &141095989
 Transform:
   m_ObjectHideFlags: 0
@@ -478,13 +479,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   portName: COM3
-  baudRate: 115200
+  baudRate: 9600
   expectsCsv: 0
   downTpl: {x: -0.16, y: 1.61, z: 10.32}
   neutralTpl: {x: -9.53, y: 2.12, z: 1.73}
   leftTpl: {x: -0.77, y: 9.73, z: 5.15}
   rightTpl: {x: -1.53, y: -9.02, z: 0.16}
-  tolerance: 1.2
+  tolerance: 4
   alpha: 0.35
   dwellTime: 0.12
   neutralRearmDwell: 0.25
