@@ -14,52 +14,38 @@ public class PanelManager : MonoBehaviour
     public bool useZoomTransition = true;
     public int zoomPanelIndex = 3;
     public float zoomDuration = 1f;
-    public float autoTransitionDelay = 2f;
-    public float waitBeforeZoom = 2f;
+    public float waitBeforeSceneLoad = 2f;
 
     [Header("Scene Flow")]
     public string nextSceneName;
-
-    [Header("Choice Panel Settings")]
-    public bool useChoicePanel = false;
-    public GameObject choiceUI;
-    public string choice1Scene;
-    public string choice2Scene;
-    public string choice3Scene;
 
     private RectTransform zoomingPanel;
     private Vector2 originalAnchorMin;
     private Vector2 originalAnchorMax;
     private Vector2 originalSizeDelta;
     private Vector2 originalAnchoredPosition;
-    private Vector2 originalPivot;
     private bool isZoomedIn = false;
-    private string chosenScene;
+    private bool zoomPanelReached = false;
 
     [Header("Glove Control")]
-    [Tooltip("When enabled, LEFT/RIGHT poses from AccelerometerPos will navigate panels.")]
     public bool useGloveInput = true;
 
-    // reference to accelerometer script for subscribe and unsubscribe
     private AccelerometerPos accRef;
+
+    private bool isChoiceScene = false;
 
     void Start()
     {
+        string sceneName = SceneManager.GetActiveScene().name;
+        isChoiceScene = sceneName == "3Page_Three"; 
+
         foreach (GameObject panel in panels)
         {
             if (panel.TryGetComponent(out CanvasGroup cg))
-            {
                 cg.alpha = 0f;
-            }
             else
-            {
-                CanvasGroup newCg = panel.AddComponent<CanvasGroup>();
-                newCg.alpha = 0f;
-            }
+                panel.AddComponent<CanvasGroup>().alpha = 0f;
         }
-
-        if (choiceUI != null)
-            choiceUI.SetActive(false);
 
         if (useZoomTransition && zoomPanelIndex >= 0 && zoomPanelIndex < panels.Length)
         {
@@ -68,53 +54,29 @@ public class PanelManager : MonoBehaviour
             originalAnchorMax = zoomingPanel.anchorMax;
             originalSizeDelta = zoomingPanel.sizeDelta;
             originalAnchoredPosition = zoomingPanel.anchoredPosition;
-            originalPivot = zoomingPanel.pivot;
         }
 
-        if (panels.Length > 0)
-        {
-            currentIndex = 0;
-            StartCoroutine(FadeInPanel(panels[0]));
-        }
+        currentIndex = -1;
 
-        // subscribe to pose events
         if (useGloveInput)
         {
             accRef = FindObjectOfType<AccelerometerPos>();
             if (accRef != null)
-            {
                 accRef.OnPose += OnAccelPose;
-            }
-            else
-            {
-                Debug.LogWarning("No AccelerometerPos found in scene");
-            }
         }
     }
 
     void OnDestroy()
     {
         if (accRef != null)
-        {
             accRef.OnPose -= OnAccelPose;
-        }
     }
 
     private void OnAccelPose(string pose)
     {
-        if (!useGloveInput) return;
-        if (isZoomedIn) return;
-
-        // only act on left and right
+        if (!useGloveInput || isZoomedIn) return;
         if (pose == "RIGHT")
-        {
             ShowNextPanel();
-        }
-        else if (pose == "LEFT")
-        {
-            ShowPreviousPanel();
-        }
-        // DOWN and NEUTRAL do nothing here
     }
 
     void Update()
@@ -122,40 +84,34 @@ public class PanelManager : MonoBehaviour
         if (!isZoomedIn)
         {
             if (Input.GetKeyDown(KeyCode.RightArrow))
-            {
                 ShowNextPanel();
-            }
-            else if (Input.GetKeyDown(KeyCode.LeftArrow))
+
+            if (isChoiceScene && zoomPanelReached)
             {
-                ShowPreviousPanel();
-            }
-        }
-        else
-        {
-            if (Input.GetKeyDown(KeyCode.Escape) && useZoomTransition)
-            {
-                StartCoroutine(ZoomOut());
+                if (Input.GetKeyDown(KeyCode.Alpha1))
+                    StartCoroutine(ZoomIn("MiniGame_2.1"));
+                else if (Input.GetKeyDown(KeyCode.Alpha2))
+                    StartCoroutine(ZoomIn("MiniGame_2.2"));
+                else if (Input.GetKeyDown(KeyCode.Alpha3))
+                    StartCoroutine(ZoomIn("MiniGame_2.3"));
             }
         }
     }
 
     void ShowNextPanel()
     {
+        if (zoomPanelReached)
+        {
+            if (!isChoiceScene && useZoomTransition)
+                StartCoroutine(ZoomIn(nextSceneName));
+            return;
+        }
+
         if (currentIndex < panels.Length - 1)
         {
             currentIndex++;
-            StartCoroutine(FadeInPanel(panels[currentIndex])); // keep your fade-in-only logic
-            CheckForTransition();
-        }
-    }
-
-    void ShowPreviousPanel()
-    {
-        if (currentIndex > 0)
-        {
-            currentIndex--;
-            // keep behaviour consistent: only fade in the newly selected panel
             StartCoroutine(FadeInPanel(panels[currentIndex]));
+            CheckForTransition();
         }
     }
 
@@ -176,43 +132,13 @@ public class PanelManager : MonoBehaviour
 
     void CheckForTransition()
     {
-        if (useZoomTransition && currentIndex == zoomPanelIndex)
+        if (currentIndex == panels.Length - 1)
         {
-            if (useChoicePanel && choiceUI != null)
-            {
-                choiceUI.SetActive(true);
-            }
-            else
-            {
-                StartCoroutine(WaitBeforeZoomIn());
-            }
+            zoomPanelReached = true;
+
+            if (isChoiceScene)
+                return;
         }
-        else if (!useZoomTransition && currentIndex == panels.Length - 1)
-        {
-            StartCoroutine(WaitAndLoadNextScene(autoTransitionDelay));
-        }
-    }
-
-    IEnumerator WaitBeforeZoomIn()
-    {
-        yield return new WaitForSeconds(waitBeforeZoom);
-        StartCoroutine(ZoomIn(nextSceneName));
-    }
-
-    public void ChooseOption(int option)
-    {
-        if (option == 1) chosenScene = choice1Scene;
-        else if (option == 2) chosenScene = choice2Scene;
-        else if (option == 3) chosenScene = choice3Scene;
-
-        choiceUI.SetActive(false);
-        StartCoroutine(WaitBeforeZoomChoice());
-    }
-
-    IEnumerator WaitBeforeZoomChoice()
-    {
-        yield return new WaitForSeconds(waitBeforeZoom);
-        StartCoroutine(ZoomIn(chosenScene));
     }
 
     IEnumerator ZoomIn(string targetScene)
@@ -243,48 +169,9 @@ public class PanelManager : MonoBehaviour
             yield return null;
         }
 
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(waitBeforeSceneLoad);
 
         if (!string.IsNullOrEmpty(targetScene))
-        {
             SceneManager.LoadScene(targetScene);
-        }
-        else
-        {
-            Debug.LogError("No scene name set! Please assign nextSceneName or choice scene.");
-        }
-    }
-
-    IEnumerator ZoomOut()
-    {
-        Vector2 startMin = zoomingPanel.anchorMin;
-        Vector2 startMax = zoomingPanel.anchorMax;
-        Vector2 startPos = zoomingPanel.anchoredPosition;
-        Vector2 startSize = zoomingPanel.sizeDelta;
-
-        float elapsed = 0f;
-        while (elapsed < zoomDuration)
-        {
-            elapsed += Time.deltaTime;
-            float t = elapsed / zoomDuration;
-
-            zoomingPanel.anchorMin = Vector2.Lerp(startMin, originalAnchorMin, t);
-            zoomingPanel.anchorMax = Vector2.Lerp(startMax, originalAnchorMax, t);
-            zoomingPanel.anchoredPosition = Vector2.Lerp(startPos, originalAnchoredPosition, t);
-            zoomingPanel.sizeDelta = Vector2.Lerp(startSize, originalSizeDelta, t);
-
-            yield return null;
-        }
-
-        isZoomedIn = false;
-    }
-
-    IEnumerator WaitAndLoadNextScene(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        if (!string.IsNullOrEmpty(nextSceneName))
-        {
-            SceneManager.LoadScene(nextSceneName);
-        }
     }
 }
