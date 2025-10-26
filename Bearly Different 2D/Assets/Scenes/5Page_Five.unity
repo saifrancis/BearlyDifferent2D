@@ -315,7 +315,7 @@ MonoBehaviour:
   - {fileID: 154555055}
   fadeDuration: 1
   useZoomTransition: 1
-  zoomPanelIndex: 2
+  zoomPanelIndex: 5
   zoomDuration: 1.5
   waitBeforeSceneLoad: 2
   nextSceneName: MiniGame_4

@@ -237,8 +237,8 @@ MonoBehaviour:
   - {fileID: 270199972}
   fadeDuration: 1
   useZoomTransition: 1
-  zoomPanelIndex: 4
-  zoomDuration: 1.5
+  zoomPanelIndex: 5
+  zoomDuration: 5
   waitBeforeSceneLoad: 2
   nextSceneName: MiniGame_2.1
   useGloveInput: 1
