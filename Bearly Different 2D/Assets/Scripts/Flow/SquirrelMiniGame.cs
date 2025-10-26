@@ -108,6 +108,6 @@ public class SquirrelMiniGame : MonoBehaviour
     System.Collections.IEnumerator GoToNextScene()
     {
         yield return new WaitForSeconds(5f);
-        SceneManager.LoadScene("6Page_Four");
+        SceneManager.LoadScene("4Page_Four");
     }
 }
