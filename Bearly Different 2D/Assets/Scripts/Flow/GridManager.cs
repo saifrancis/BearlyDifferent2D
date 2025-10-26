@@ -1,5 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 
 public class GridManager : MonoBehaviour
@@ -12,10 +13,7 @@ public class GridManager : MonoBehaviour
     public int cols = 8;
     public Berry[,] grid;
 
-    void Start()
-    {
-        GenerateGrid();
-    }
+    void Start() => GenerateGrid();
 
     public void GenerateGrid()
     {
@@ -42,20 +40,15 @@ public class GridManager : MonoBehaviour
     {
         int type;
         bool hasMatch;
-
         do
         {
             type = Random.Range(0, berrySprites.Length);
             hasMatch = false;
 
-            if (col >= 2 &&
-                grid[row, col - 1].type == type &&
-                grid[row, col - 2].type == type)
+            if (col >= 2 && grid[row, col - 1].type == type && grid[row, col - 2].type == type)
                 hasMatch = true;
 
-            if (row >= 2 &&
-                grid[row - 1, col].type == type &&
-                grid[row - 2, col].type == type)
+            if (row >= 2 && grid[row - 1, col].type == type && grid[row - 2, col].type == type)
                 hasMatch = true;
 
         } while (hasMatch);
@@ -72,51 +65,99 @@ public class GridManager : MonoBehaviour
         b.SetType(tempType, tempSprite);
     }
 
-    public List<Berry> FindMatches()
+    // --- Detect all match groups (3 or more) ---
+    public List<List<Berry>> FindMatchGroups()
     {
-        List<Berry> matches = new List<Berry>();
+        var groups = new List<List<Berry>>();
 
+        // Horizontal runs
         for (int r = 0; r < rows; r++)
         {
-            for (int c = 0; c < cols - 2; c++)
+            int runType = -1, runStart = 0, runLen = 0;
+            for (int c = 0; c <= cols; c++)
             {
-                int type = grid[r, c].type;
-                if (type == -1) continue;
-
-                if (grid[r, c + 1].type == type && grid[r, c + 2].type == type)
+                int t = (c < cols) ? grid[r, c].type : -999;
+                if (t == runType && t != -1)
+                    runLen++;
+                else
                 {
-                    matches.Add(grid[r, c]);
-                    matches.Add(grid[r, c + 1]);
-                    matches.Add(grid[r, c + 2]);
+                    if (runType != -1 && runLen >= 3)
+                    {
+                        var g = new List<Berry>();
+                        for (int cc = runStart; cc < runStart + runLen; cc++)
+                            g.Add(grid[r, cc]);
+                        groups.Add(g);
+                    }
+                    runType = t;
+                    runStart = c;
+                    runLen = (t != -1) ? 1 : 0;
                 }
             }
         }
 
+        // Vertical runs
         for (int c = 0; c < cols; c++)
         {
-            for (int r = 0; r < rows - 2; r++)
+            int runType = -1, runStart = 0, runLen = 0;
+            for (int r = 0; r <= rows; r++)
             {
-                int type = grid[r, c].type;
-                if (type == -1) continue;
-
-                if (grid[r + 1, c].type == type && grid[r + 2, c].type == type)
+                int t = (r < rows) ? grid[r, c].type : -999;
+                if (t == runType && t != -1)
+                    runLen++;
+                else
                 {
-                    matches.Add(grid[r, c]);
-                    matches.Add(grid[r + 1, c]);
-                    matches.Add(grid[r + 2, c]);
+                    if (runType != -1 && runLen >= 3)
+                    {
+                        var g = new List<Berry>();
+                        for (int rr = runStart; rr < runStart + runLen; rr++)
+                            g.Add(grid[rr, c]);
+                        groups.Add(g);
+                    }
+                    runType = t;
+                    runStart = r;
+                    runLen = (t != -1) ? 1 : 0;
                 }
             }
         }
 
-        return matches;
+        return groups;
+    }
+
+    public List<Berry> FlattenUnique(List<List<Berry>> groups)
+    {
+        var set = new HashSet<Berry>();
+        foreach (var g in groups)
+            foreach (var b in g)
+                set.Add(b);
+        return new List<Berry>(set);
+    }
+
+    public IEnumerator FlashMatches(List<Berry> matches, Color color, float duration)
+    {
+        List<Outline> outlines = new List<Outline>();
+
+        foreach (Berry b in matches)
+        {
+            var outline = b.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = true;
+                outline.effectColor = color;
+                outline.effectDistance = new Vector2(6f, -6f); // thicker outline
+                outlines.Add(outline);
+            }
+        }
+
+        yield return new WaitForSeconds(duration);
+
+        foreach (var o in outlines)
+            o.enabled = false;
     }
 
     public void RemoveAndCollapse(List<Berry> matches)
     {
         foreach (Berry b in matches)
-        {
             b.SetType(-1, null);
-        }
 
         for (int c = 0; c < cols; c++)
         {
@@ -131,7 +172,6 @@ public class GridManager : MonoBehaviour
                 {
                     Berry current = grid[r, c];
                     Berry target = grid[r + emptyCount, c];
-
                     target.SetType(current.type, current.GetComponent<Image>().sprite);
                     current.SetType(-1, null);
                 }

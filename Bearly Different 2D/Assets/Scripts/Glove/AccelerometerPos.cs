@@ -18,7 +18,7 @@ public class AccelerometerPos : MonoBehaviour
 
     [Header("Templates in m per s squared")]
     public Vector3 downTpl = new Vector3(-0.16f, 1.61f, 10.32f);
-    public Vector3 neutralTpl = new Vector3(-9.53f, 2.12f, 1.73f);
+    public Vector3 neutralTpl = new Vector3(1.05f, 1.90f, 10.21f);
     public Vector3 leftTpl = new Vector3(0.27f, 4.00f, 9.92f);
     public Vector3 rightTpl = new Vector3(-1.53f, -9.02f, 0.16f);
 
