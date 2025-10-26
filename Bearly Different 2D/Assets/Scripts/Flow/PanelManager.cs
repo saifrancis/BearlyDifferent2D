@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.SceneManagement;
@@ -15,6 +15,7 @@ public class PanelManager : MonoBehaviour
     public int zoomPanelIndex = 3;
     public float zoomDuration = 1f;
     public float autoTransitionDelay = 2f;
+    public float waitBeforeZoom = 2f; 
 
     [Header("Scene Flow")]
     public string nextSceneName;
@@ -105,6 +106,11 @@ public class PanelManager : MonoBehaviour
             GoPrev();
         }
         // DOWN and NEUTRAL do nothing here
+        if (panels.Length > 0)
+        {
+            currentIndex = 0;
+            StartCoroutine(FadeInPanel(panels[0]));
+        }
     }
 
     void Update()
@@ -172,13 +178,19 @@ public class PanelManager : MonoBehaviour
             }
             else
             {
-                StartCoroutine(ZoomIn(nextSceneName));
+                StartCoroutine(WaitBeforeZoomIn());
             }
         }
         else if (!useZoomTransition && currentIndex == panels.Length - 1)
         {
             StartCoroutine(WaitAndLoadNextScene(autoTransitionDelay));
         }
+    }
+
+    IEnumerator WaitBeforeZoomIn()
+    {
+        yield return new WaitForSeconds(waitBeforeZoom);
+        StartCoroutine(ZoomIn(nextSceneName));
     }
 
     public void ChooseOption(int option)
@@ -188,6 +200,12 @@ public class PanelManager : MonoBehaviour
         else if (option == 3) chosenScene = choice3Scene;
 
         choiceUI.SetActive(false);
+        StartCoroutine(WaitBeforeZoomChoice());
+    }
+
+    IEnumerator WaitBeforeZoomChoice()
+    {
+        yield return new WaitForSeconds(waitBeforeZoom);
         StartCoroutine(ZoomIn(chosenScene));
     }
 
@@ -219,7 +237,7 @@ public class PanelManager : MonoBehaviour
             yield return null;
         }
 
-        yield return new WaitForSeconds(5f);
+        yield return new WaitForSeconds(2f); 
 
         if (!string.IsNullOrEmpty(targetScene))
         {
