@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour
     System.Collections.IEnumerator LoadNextSceneAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        SceneManager.LoadScene("3Page_Two");
+        SceneManager.LoadScene("2Page_Two");
     }
 
     void MoveTo(int newRow, int newCol)
