@@ -64,7 +64,17 @@ public class BeehiveMiniGame1 : MonoBehaviour
     {
         float left = targetZone.position.x - targetZone.localScale.x / 2;
         float right = targetZone.position.x + targetZone.localScale.x / 2;
-        return beehive.position.x >= left && beehive.position.x <= right;
+
+        float halfWidth = beehive.GetComponent<SpriteRenderer>().bounds.size.x / 2f;
+        float hiveLeft = beehive.position.x - halfWidth;
+        float hiveRight = beehive.position.x + halfWidth;
+
+        float zoneLeft = targetZone.position.x - targetZone.localScale.x / 2f;
+        float zoneRight = targetZone.position.x + targetZone.localScale.x / 2f;
+
+        // Check if any part of the hive overlaps with the zone
+        return hiveRight >= zoneLeft && hiveLeft <= zoneRight;
+
     }
 
     void StartFalling()
