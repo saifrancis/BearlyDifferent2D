@@ -173,7 +173,7 @@ public class SliderManager : MonoBehaviour
     private IEnumerator GoToNextScene()
     {
         yield return new WaitForSeconds(5f);
-        SceneManager.LoadScene("12Page_Eight");
+        SceneManager.LoadScene("6Page_Six");
     }
 }
 

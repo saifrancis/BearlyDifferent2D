@@ -846,7 +846,7 @@ MonoBehaviour:
   requiredHits: 8
   fallGravityScale: 1
   hitsText: {fileID: 634483576}
-  nextSceneName: 6Page_Four
+  nextSceneName: 4Page_Four
   delayAfterWin: 8
 --- !u!4 &1785460777
 Transform:

@@ -68,6 +68,6 @@ public class FishManager : MonoBehaviour
 
     void GoToNextScene()
     {
-        SceneManager.LoadScene("9Page_Six");
+        SceneManager.LoadScene("5Page_Five");
     }
 }

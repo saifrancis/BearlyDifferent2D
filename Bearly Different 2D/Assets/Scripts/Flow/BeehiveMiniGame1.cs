@@ -14,7 +14,7 @@ public class BeehiveMiniGame1 : MonoBehaviour
     public float fallGravityScale = 1f;
     public TextMeshProUGUI hitsText;
 
-    public string nextSceneName = "6Page_Four";
+    public string nextSceneName = "4Page_Four";
     public float delayAfterWin = 8f;
 
     private Rigidbody2D beehiveRb;

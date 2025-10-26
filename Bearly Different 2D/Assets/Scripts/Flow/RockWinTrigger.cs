@@ -4,7 +4,7 @@ using System.Collections;
 
 public class RockWinTrigger : MonoBehaviour
 {
-    public string nextSceneName = "6Page_Four";
+    public string nextSceneName = "4Page_Four";
     public float delayBeforeLoad = 5f;
 
     private bool gameWon = false;

@@ -180,7 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f089ca1e23da21b4c8ad5c27bf1c3710, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  nextSceneName: 6Page_Four
+  nextSceneName: 4Page_Four
   delayBeforeLoad: 5
 --- !u!212 &69062777
 SpriteRenderer:
