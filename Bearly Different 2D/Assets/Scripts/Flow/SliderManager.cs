@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using TMPro;
 
 public class SliderManager : MonoBehaviour
 {
@@ -13,6 +14,13 @@ public class SliderManager : MonoBehaviour
     private int size;
     private bool shuffling = false;
     private bool hasShuffled = false;
+
+    // Active piece selection
+    private int selectedIndex = 0;
+    private Color originalColor = Color.white;
+    private Color highlightColor = Color.red;
+
+    [SerializeField] private TextMeshProUGUI messageText;
 
     private void CreateGamePieces(float gapThickness)
     {
@@ -29,6 +37,12 @@ public class SliderManager : MonoBehaviour
 
                 piece.localScale = ((2 * width) - gapThickness) * Vector3.one;
                 piece.name = $"Piece {(row * size) + col}";
+
+                // Store original color if piece has a SpriteRenderer
+                if (piece.TryGetComponent<SpriteRenderer>(out SpriteRenderer sr))
+                {
+                    sr.color = originalColor;
+                }
 
                 if ((row == size - 1) && (col == size - 1))
                 {
@@ -50,6 +64,8 @@ public class SliderManager : MonoBehaviour
                 }
             }
         }
+
+        HighlightSelectedPiece();
     }
 
     void Start()
@@ -72,43 +88,76 @@ public class SliderManager : MonoBehaviour
             StartCoroutine(Reshuffle());
         }
 
+        HandleArrowKeys();
+        HandleSpacebar();
+    }
+
+    private void HandleArrowKeys()
+    {
+        int previousIndex = selectedIndex;
+
+        if (Input.GetKeyDown(KeyCode.LeftArrow) && (selectedIndex % size > 0))
+            selectedIndex--;
+        if (Input.GetKeyDown(KeyCode.RightArrow) && (selectedIndex % size < size - 1))
+            selectedIndex++;
+        if (Input.GetKeyDown(KeyCode.UpArrow) && (selectedIndex >= size))
+            selectedIndex -= size;
+        if (Input.GetKeyDown(KeyCode.DownArrow) && (selectedIndex < pieces.Count - size))
+            selectedIndex += size;
+
+        if (previousIndex != selectedIndex)
+            HighlightSelectedPiece();
+    }
+
+    private void HighlightSelectedPiece()
+    {
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            Transform outline = pieces[i].Find("Outline"); // The child red square
+            if (outline != null)
+                outline.gameObject.SetActive(i == selectedIndex);
+        }
+    }
+
+
+    private void HandleSpacebar()
+    {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
-
-            if (hit)
+            // Check if selected piece is adjacent to empty location
+            if (IsAdjacent(selectedIndex, emptyLocation))
             {
-                for (int i = 0; i < pieces.Count; i++)
-                {
-                    if (pieces[i] == hit.transform)
-                    {
-                        if (SwapIfValid(i, -size, size)) { break; }
-                        if (SwapIfValid(i, +size, size)) { break; }
-                        if (SwapIfValid(i, -1, 0)) { break; }
-                        if (SwapIfValid(i, +1, size - 1)) { break; }
-                    }
-                }
+                SwapPieces(selectedIndex, emptyLocation);
+                messageText.text = "";
+            }
+            else
+            {
+                Debug.Log("Piece can't be moved");
+                StartCoroutine(ShowMessage("Piece can't be moved", 2f));
             }
         }
     }
 
-    private bool SwapIfValid(int i, int offset, int colCheck)
+    private bool IsAdjacent(int index1, int index2)
     {
-        if ((i % size) != colCheck && ((i + offset) == emptyLocation))
+        int row1 = index1 / size;
+        int col1 = index1 % size;
+        int row2 = index2 / size;
+        int col2 = index2 % size;
+
+        return (Mathf.Abs(row1 - row2) + Mathf.Abs(col1 - col2)) == 1;
+    }
+
+    private void SwapPieces(int i1, int i2)
+    {
+        (pieces[i1], pieces[i2]) = (pieces[i2], pieces[i1]);
+        (pieces[i1].localPosition, pieces[i2].localPosition) = (pieces[i2].localPosition, pieces[i1].localPosition);
+        emptyLocation = i1;
+
+        if (hasShuffled && CheckCompletion())
         {
-            (pieces[i], pieces[i + offset]) = (pieces[i + offset], pieces[i]);
-            (pieces[i].localPosition, pieces[i + offset].localPosition) = (pieces[i + offset].localPosition, pieces[i].localPosition);
-
-            emptyLocation = i;
-
-            if (hasShuffled && CheckCompletion())
-            {
-                StartCoroutine(GoToNextScene());
-            }
-
-            return true;
+            StartCoroutine(GoToNextScene());
         }
-        return false;
     }
 
     private bool CheckCompletion()
@@ -165,7 +214,7 @@ public class SliderManager : MonoBehaviour
     private IEnumerator Reshuffle()
     {
         shuffling = true;
-        yield return new WaitForSeconds(0.5f); 
+        yield return new WaitForSeconds(0.5f);
         Shuffle();
         shuffling = false;
     }
@@ -175,6 +224,21 @@ public class SliderManager : MonoBehaviour
         yield return new WaitForSeconds(5f);
         SceneManager.LoadScene("6Page_Six");
     }
+
+    private bool SwapIfValid(int i, int offset, int colCheck)
+    {
+        if ((i % size) != colCheck && ((i + offset) == emptyLocation))
+        {
+            SwapPieces(i, i + offset);
+            return true;
+        }
+        return false;
+    }
+
+    private IEnumerator ShowMessage(string text, float duration)
+    {
+        messageText.text = text;
+        yield return new WaitForSeconds(duration);
+        messageText.text = "";
+    }
 }
-
-
