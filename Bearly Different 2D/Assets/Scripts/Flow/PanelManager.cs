@@ -34,10 +34,17 @@ public class PanelManager : MonoBehaviour
 
     private bool isChoiceScene = false;
 
+    [Header("Toggle Panel (press key to show/hide)")]
+    public GameObject togglePanel;
+    public KeyCode toggleKey = KeyCode.H;
+    public float toggleFadeDuration = 0.2f;  // quick fade
+    private bool togglePanelActive = false;
+    private Coroutine toggleCoroutine;
+
     void Start()
     {
         string sceneName = SceneManager.GetActiveScene().name;
-        isChoiceScene = sceneName == "3Page_Three"; 
+        isChoiceScene = sceneName == "3Page_Three";
 
         foreach (GameObject panel in panels)
         {
@@ -46,6 +53,14 @@ public class PanelManager : MonoBehaviour
             else
                 panel.AddComponent<CanvasGroup>().alpha = 0f;
         }
+
+        if (togglePanel == null && panels != null && panels.Length > 0)
+        {
+            togglePanel = panels[0];
+        }
+
+        if (togglePanel != null)
+            togglePanelActive = togglePanel.activeSelf;
 
         if (useZoomTransition && zoomPanelIndex >= 0 && zoomPanelIndex < panels.Length)
         {
@@ -81,6 +96,12 @@ public class PanelManager : MonoBehaviour
 
     void Update()
     {
+        // Toggle panel with key
+        if (Input.GetKeyDown(toggleKey))
+        {
+            TogglePanel();
+        }
+
         if (!isZoomedIn)
         {
             if (Input.GetKeyDown(KeyCode.RightArrow))
@@ -95,6 +116,49 @@ public class PanelManager : MonoBehaviour
                 else if (Input.GetKeyDown(KeyCode.Alpha3))
                     StartCoroutine(ZoomIn("MiniGame_2.3"));
             }
+        }
+    }
+
+    void TogglePanel()
+    {
+        if (togglePanel == null) return;
+
+        togglePanelActive = !togglePanelActive;
+
+        if (toggleCoroutine != null)
+            StopCoroutine(toggleCoroutine);
+
+        toggleCoroutine = StartCoroutine(FadeTogglePanel(togglePanelActive));
+    }
+
+    IEnumerator FadeTogglePanel(bool show)
+    {
+        CanvasGroup cg = togglePanel.GetComponent<CanvasGroup>();
+        if (cg == null) cg = togglePanel.AddComponent<CanvasGroup>();
+
+        if (show)
+        {
+            togglePanel.SetActive(true);
+            float elapsed = 0f;
+            while (elapsed < toggleFadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                cg.alpha = Mathf.Lerp(0f, 1f, elapsed / toggleFadeDuration);
+                yield return null;
+            }
+            cg.alpha = 1f;
+        }
+        else
+        {
+            float elapsed = 0f;
+            while (elapsed < toggleFadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                cg.alpha = Mathf.Lerp(1f, 0f, elapsed / toggleFadeDuration);
+                yield return null;
+            }
+            cg.alpha = 0f;
+            togglePanel.SetActive(false);
         }
     }
 
@@ -135,9 +199,7 @@ public class PanelManager : MonoBehaviour
         if (currentIndex == panels.Length - 1)
         {
             zoomPanelReached = true;
-
-            if (isChoiceScene)
-                return;
+            if (isChoiceScene) return;
         }
     }
 
