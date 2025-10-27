@@ -13,6 +13,7 @@ public class FishManager : MonoBehaviour
     public TextMeshProUGUI scoreText;
 
     private int score = 0;
+    private int targetScore = 5; // Number of leaves needed to win
 
     private void Awake()
     {
@@ -41,7 +42,8 @@ public class FishManager : MonoBehaviour
         Destroy(leaf.gameObject);
         UpdateScoreUI();
 
-        if (score >= 5)
+        // Check win condition
+        if (score >= targetScore)
         {
             scoreText.text = "YOU WIN! Score: " + score;
             CancelInvoke("SpawnLeaf");
@@ -49,17 +51,7 @@ public class FishManager : MonoBehaviour
         }
     }
 
-    public void MissedLeaf()
-    {
-        score--;
-        UpdateScoreUI();
-
-        if (score < 0)
-        {
-            scoreText.text = "GAME OVER! Score: " + score;
-            CancelInvoke("SpawnLeaf");
-        }
-    }
+    // Removed MissedLeaf completely since no penalty is needed
 
     void UpdateScoreUI()
     {

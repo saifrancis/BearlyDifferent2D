@@ -6,9 +6,9 @@ public class Leaf : MonoBehaviour
 
     void Update()
     {
+        // If leaf falls off screen, just destroy it
         if (transform.position.y < -6f)
         {
-            FishManager.Instance.MissedLeaf();
             Destroy(gameObject);
         }
     }
