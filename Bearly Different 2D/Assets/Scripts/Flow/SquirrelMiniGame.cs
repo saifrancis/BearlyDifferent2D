@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 
@@ -44,35 +44,56 @@ public class SquirrelMiniGame : MonoBehaviour
 
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        // Keyboard input: Space → same behaviour as glove fist
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            float interval = Time.time - lastJumpTime;
-            lastJumpTime = Time.time;
+            TryJump();
+        }
+    }
 
-            playerRb.velocity = new Vector2(playerRb.velocity.x, 0f);
-            playerRb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+    /// <summary>
+    /// Called by the glove script when a fist is detected.
+    /// Mirrors pressing Space (only jumps if grounded).
+    /// </summary>
+    public void OnFist()
+    {
+        if (gameWon) return;
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
+        TryJump();
+    }
 
-            if (interval < minJumpInterval)
+    private void TryJump()
+    {
+        if (!isGrounded) return;
+
+        float interval = Time.time - lastJumpTime;
+        lastJumpTime = Time.time;
+
+        // Apply jump
+        playerRb.velocity = new Vector2(playerRb.velocity.x, 0f);
+        playerRb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+
+        // Rhythm feedback
+        if (interval < minJumpInterval)
+        {
+            messageText.text = "Pip is exhausted... too fast!";
+            perfectRhythmTimer = 0f;
+        }
+        else if (interval > maxJumpInterval)
+        {
+            messageText.text = "A little more effort!";
+            perfectRhythmTimer = 0f;
+        }
+        else
+        {
+            messageText.text = "Perfect rhythm!";
+            if (!isShaking) StartCoroutine(ShakeBranch());
+
+            perfectRhythmTimer += interval;
+
+            if (perfectRhythmTimer >= requiredPerfectTime)
             {
-                messageText.text = "Pip is exhausted... too fast!";
-                perfectRhythmTimer = 0f;
-            }
-            else if (interval > maxJumpInterval)
-            {
-                messageText.text = "A little more effort!";
-                perfectRhythmTimer = 0f;
-            }
-            else
-            {
-                messageText.text = "Perfect rhythm!";
-                if (!isShaking) StartCoroutine(ShakeBranch());
-
-                perfectRhythmTimer += interval;
-
-                if (perfectRhythmTimer >= requiredPerfectTime)
-                {
-                    WinGame();
-                }
+                WinGame();
             }
         }
     }

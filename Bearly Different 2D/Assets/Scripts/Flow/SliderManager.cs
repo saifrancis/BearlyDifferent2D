@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -241,4 +241,49 @@ public class SliderManager : MonoBehaviour
         yield return new WaitForSeconds(duration);
         messageText.text = "";
     }
+
+    // ⬇️ Put these inside your existing SliderManager class
+
+// --- Public API used by the glove ---
+public void GloveMoveLeft()
+{
+    int previous = selectedIndex;
+    if (selectedIndex % size > 0) selectedIndex--;
+    if (previous != selectedIndex) HighlightSelectedPiece();
+}
+
+public void GloveMoveRight()
+{
+    int previous = selectedIndex;
+    if (selectedIndex % size < size - 1) selectedIndex++;
+    if (previous != selectedIndex) HighlightSelectedPiece();
+}
+
+public void GloveMoveUp()
+{
+    int previous = selectedIndex;
+    if (selectedIndex >= size) selectedIndex -= size;
+    if (previous != selectedIndex) HighlightSelectedPiece();
+}
+
+public void GloveMoveDown()
+{
+    int previous = selectedIndex;
+    if (selectedIndex < pieces.Count - size) selectedIndex += size;
+    if (previous != selectedIndex) HighlightSelectedPiece();
+}
+
+public void GloveSelect()  // same as pressing Space
+{
+    if (IsAdjacent(selectedIndex, emptyLocation))
+    {
+        SwapPieces(selectedIndex, emptyLocation);
+        if (messageText != null) messageText.text = "";
+    }
+    else
+    {
+        if (messageText != null) StartCoroutine(ShowMessage("Piece can't be moved", 2f));
+    }
+}
+
 }

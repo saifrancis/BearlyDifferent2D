@@ -5,7 +5,7 @@ public class BeehiveMiniGame3 : MonoBehaviour
     [Header("Spawner Settings")]
     public Transform spawner;
     public GameObject[] rockPrefabs;
-    public float spawnXRange = 2f;
+    public float spawnXRange = 1f;
 
     public bool canSpawn = true;
 

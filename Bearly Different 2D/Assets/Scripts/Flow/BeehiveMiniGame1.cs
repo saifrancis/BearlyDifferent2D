@@ -40,16 +40,8 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                if (IsInTargetZone())
-                {
-                    hitCount++;
-                    UpdateHitsText();
-
-                    if (hitCount >= requiredHits)
-                    {
-                        StartFalling();
-                    }
-                }
+                // Space behaves as a “hit” attempt
+                TryRegisterHit();
             }
         }
     }
@@ -74,7 +66,6 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
         // Check if any part of the hive overlaps with the zone
         return hiveRight >= zoneLeft && hiveLeft <= zoneRight;
-
     }
 
     void StartFalling()
@@ -104,5 +95,31 @@ public class BeehiveMiniGame1 : MonoBehaviour
     {
         if (hitsText != null)
             hitsText.text = $"Hits: {hitCount} / {requiredHits}";
+    }
+
+    // ----------------------------
+    // Called by glove “fist” action
+    // ----------------------------
+    public void OnFist()
+    {
+        // Same action as pressing Space
+        TryRegisterHit();
+    }
+
+    // Internal: perform the hit if we’re inside the target zone
+    private void TryRegisterHit()
+    {
+        if (isFalling) return;
+
+        if (IsInTargetZone())
+        {
+            hitCount++;
+            UpdateHitsText();
+
+            if (hitCount >= requiredHits)
+            {
+                StartFalling();
+            }
+        }
     }
 }
