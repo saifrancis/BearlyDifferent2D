@@ -15,7 +15,6 @@ public class SliderManager : MonoBehaviour
     private bool shuffling = false;
     private bool hasShuffled = false;
 
-    // Active piece selection
     private int selectedIndex = 0;
     private Color originalColor = Color.white;
     private Color highlightColor = Color.red;
@@ -38,7 +37,6 @@ public class SliderManager : MonoBehaviour
                 piece.localScale = ((2 * width) - gapThickness) * Vector3.one;
                 piece.name = $"Piece {(row * size) + col}";
 
-                // Store original color if piece has a SpriteRenderer
                 if (piece.TryGetComponent<SpriteRenderer>(out SpriteRenderer sr))
                 {
                     sr.color = originalColor;
@@ -113,7 +111,7 @@ public class SliderManager : MonoBehaviour
     {
         for (int i = 0; i < pieces.Count; i++)
         {
-            Transform outline = pieces[i].Find("Outline"); // The child red square
+            Transform outline = pieces[i].Find("Outline"); 
             if (outline != null)
                 outline.gameObject.SetActive(i == selectedIndex);
         }
@@ -124,7 +122,7 @@ public class SliderManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            // Check if selected piece is adjacent to empty location
+           
             if (IsAdjacent(selectedIndex, emptyLocation))
             {
                 SwapPieces(selectedIndex, emptyLocation);
