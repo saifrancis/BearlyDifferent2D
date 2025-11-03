@@ -1207,7 +1207,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &263596408
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1235,6 +1235,8 @@ MonoBehaviour:
   fistWindowSeconds: 1.5
   selectRearmSeconds: 0.75
   debugFist: 1
+  logRawSerial: 1
+  rawLogMax: 200
   game: {fileID: 1300579565}
   useDtr: 0
   useRts: 0

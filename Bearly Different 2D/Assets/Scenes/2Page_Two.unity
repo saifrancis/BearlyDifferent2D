@@ -1136,7 +1136,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1733621451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1151,15 +1151,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portName: COM3
   baudRate: 9600
+  useDtr: 1
+  useRts: 1
   expectsCsv: 0
-  downTpl: {x: -0.16, y: 1.61, z: 10.32}
-  neutralTpl: {x: -9.53, y: 2.12, z: 1.73}
-  leftTpl: {x: -0.77, y: 9.73, z: 5.15}
-  rightTpl: {x: -1.53, y: -9.02, z: 0.16}
+  logPoses: 1
+  readOrientationPoses: 1
+  readFingerChoices: 1
   tolerance: 4
   alpha: 0.35
   dwellTime: 0.12
   neutralRearmDwell: 0.25
+  gestureWindowSeconds: 0.6
+  choiceCooldownSeconds: 0.25
+  bendConfirmCount: 2
+  straightBaseline: f200000002010000e5000000120100000a010000
+  bentDelta: 180
+  straightDelta: 40
 --- !u!4 &1733621452
 Transform:
   m_ObjectHideFlags: 0

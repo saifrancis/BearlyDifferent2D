@@ -31,7 +31,7 @@ public class PanelManager : MonoBehaviour
     [Header("Glove Control")]
     public bool useGloveInput = true;
 
-    private AccelerometerPos accRef;
+    private UnifiedGloveController accRef;
 
     private bool isChoiceScene = false;
 
@@ -76,7 +76,7 @@ public class PanelManager : MonoBehaviour
 
         if (useGloveInput)
         {
-            accRef = FindObjectOfType<AccelerometerPos>();
+            accRef = FindObjectOfType<UnifiedGloveController>();
             if (accRef != null)
             {
                 accRef.OnPose += OnAccelPose;
