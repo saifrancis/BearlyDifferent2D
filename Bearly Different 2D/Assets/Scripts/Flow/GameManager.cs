@@ -20,6 +20,17 @@ public class GameManager : MonoBehaviour
     private bool levelComplete = false;
     private bool isResolving = false;
 
+    [Header("Outline Colors")]
+    public Color navigateColor = new Color32(255, 69, 0, 255); // OrangeRed
+    public Color swapReadyColor = Color.yellow;
+    public Color matchColor = Color.green;
+
+    [Header("Match Wiggle")]
+    public bool enableMatchWiggle = true;
+    public float wiggleDuration = 0.20f;
+    public float wiggleScale = 1.10f;
+    public float wiggleAngle = 10f;
+
     void Start()
     {
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
@@ -86,8 +97,15 @@ public class GameManager : MonoBehaviour
             if (groups == null || groups.Count == 0) break;
 
             var flat = gridManager.FlattenUnique(groups);
-            yield return StartCoroutine(gridManager.FlashMatches(flat, Color.green, 2f));
 
+            // 1) Optional wiggle on each matched berry
+            if (enableMatchWiggle)
+                yield return StartCoroutine(WiggleGroup(flat, wiggleDuration, wiggleScale, wiggleAngle));
+
+            // 2) Your existing green flash (now uses matchColor from Inspector)
+            yield return StartCoroutine(gridManager.FlashMatches(flat, matchColor, 2f));
+
+            // 3) Remove & collapse like before
             gridManager.RemoveAndCollapse(flat);
 
             successfulMatches += groups.Count;
@@ -105,7 +123,7 @@ public class GameManager : MonoBehaviour
         }
 
         isChoosingSwap = false;
-        SetOutlineColor(activeBerry, new Color32(255, 69, 0, 255)); // OrangeRed
+        SetOutlineColor(activeBerry, navigateColor);
         isResolving = false;
     }
 
@@ -118,7 +136,7 @@ public class GameManager : MonoBehaviour
     void MoveTo(int newRow, int newCol)
     {
         if (activeBerry != null)
-            SetOutlineColor(activeBerry, Color.clear);
+            SetOutlineColor(activeBerry, Color.clear); 
 
         currentRow = newRow;
         currentCol = newCol;
@@ -128,7 +146,7 @@ public class GameManager : MonoBehaviour
     void SetActiveBerry(Berry berry)
     {
         activeBerry = berry;
-        SetOutlineColor(activeBerry, new Color32(255, 69, 0, 255)); // OrangeRed
+        SetOutlineColor(activeBerry, navigateColor);
     }
 
     void ArmSwap()
@@ -137,7 +155,7 @@ public class GameManager : MonoBehaviour
         if (!isChoosingSwap)
         {
             isChoosingSwap = true;
-            SetOutlineColor(activeBerry, Color.yellow);
+            SetOutlineColor(activeBerry, swapReadyColor);
         }
     }
 
@@ -176,7 +194,7 @@ public class GameManager : MonoBehaviour
         if (!isChoosingSwap)
         {
             isChoosingSwap = true;
-            SetOutlineColor(activeBerry, Color.yellow);
+            SetOutlineColor(activeBerry, swapReadyColor);
         }
     }
 
@@ -195,7 +213,7 @@ public class GameManager : MonoBehaviour
         if (targetRow < 0 || targetRow >= gridManager.rows || targetCol < 0 || targetCol >= gridManager.cols)
         {
             isChoosingSwap = false;
-            SetOutlineColor(activeBerry, new Color32(255, 69, 0, 255));
+            SetOutlineColor(activeBerry, navigateColor);
             return;
         }
 
@@ -218,9 +236,49 @@ public class GameManager : MonoBehaviour
         var outline = berry.GetComponent<Outline>();
         if (outline != null)
         {
+
             outline.enabled = color != Color.clear;
             outline.effectColor = color;
-            outline.effectDistance = new Vector2(5f, -5f); // thick outline
+            outline.effectDistance = new Vector2(5f, -5f); // base thickness 
         }
+    }
+
+
+    // Wiggle the entire group briefly
+    IEnumerator WiggleGroup(List<Berry> berries, float duration, float scale, float angle)
+    {
+        // start per-berry wiggles
+        foreach (var b in berries)
+            if (b != null) StartCoroutine(Wiggle(b.transform, duration, scale, angle));
+
+        yield return new WaitForSeconds(duration);
+    }
+
+    // Simple wiggle: oscillate rotation & scale, then restore
+    IEnumerator Wiggle(Transform t, float duration, float scale, float angle)
+    {
+        if (t == null) yield break;
+
+        Vector3 baseScale = t.localScale;
+        Quaternion baseRot = t.localRotation;
+
+        float elapsed = 0f;
+        float freq = 24f; // wiggle speed
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float s = 1f + (Mathf.Sin(elapsed * freq) * 0.5f + 0.5f) * (scale - 1f); // 1..scale
+            float a = Mathf.Sin(elapsed * freq) * angle; // -angle..angle
+
+            t.localScale = baseScale * s;
+            t.localRotation = Quaternion.Euler(0f, 0f, a);
+
+            yield return null;
+        }
+
+        // restore
+        t.localScale = baseScale;
+        t.localRotation = baseRot;
     }
 }

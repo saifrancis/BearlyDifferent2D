@@ -378,10 +378,10 @@ MonoBehaviour:
   berryPrefab: {fileID: 2064777995485439731, guid: 53b56448c63733c48bc25ee25c859983, type: 3}
   gridPanel: {fileID: 1161037728}
   berrySprites:
-  - {fileID: 21300000, guid: 8629e9f86012e8a4ba96acaa04752bde, type: 3}
-  - {fileID: 21300000, guid: bc8a5637530cb6543a64a8b4a838561e, type: 3}
-  - {fileID: 21300000, guid: 1b691355ffa20b442aebba7e3d00d476, type: 3}
-  - {fileID: 21300000, guid: c8f0fca63f43381429e3d1ae85b51963, type: 3}
+  - {fileID: 1609033673, guid: 65877673eb8105040833d255f0fcacea, type: 3}
+  - {fileID: 1515973298, guid: 65877673eb8105040833d255f0fcacea, type: 3}
+  - {fileID: 1982280671, guid: 65877673eb8105040833d255f0fcacea, type: 3}
+  - {fileID: 1236085811, guid: 65877673eb8105040833d255f0fcacea, type: 3}
   rows: 4
   cols: 4
 --- !u!4 &68618816
@@ -434,7 +434,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -836, y: 473}
+  m_AnchoredPosition: {x: -62, y: -520}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &120195596
@@ -549,7 +549,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &130943793
 RectTransform:
   m_ObjectHideFlags: 0
@@ -744,7 +744,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -243, y: 473}
+  m_AnchoredPosition: {x: -364, y: 409}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &158684291
@@ -1091,7 +1091,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -592, y: 473}
+  m_AnchoredPosition: {x: 182, y: -520}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &232006467
@@ -1803,7 +1803,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &624140035
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2691,8 +2691,8 @@ Camera:
   m_GameObject: {fileID: 1047722354}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.92941177, g: 0.9098039, b: 0.8156863, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -2792,15 +2792,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: c31d316c05bb6f440888c4665e0134fc, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -3371,6 +3371,13 @@ MonoBehaviour:
   gridManager: {fileID: 68618815}
   scoreText: {fileID: 232006467}
   matchesNeeded: 5
+  navigateColor: {r: 1, g: 0, b: 0.75262356, a: 1}
+  swapReadyColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  matchColor: {r: 0, g: 1, b: 0, a: 1}
+  enableMatchWiggle: 1
+  wiggleDuration: 0.2
+  wiggleScale: 1.1
+  wiggleAngle: 10
 --- !u!4 &1300579566
 Transform:
   m_ObjectHideFlags: 0

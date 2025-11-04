@@ -143,7 +143,7 @@ public class GridManager : MonoBehaviour
             {
                 outline.enabled = true;
                 outline.effectColor = color;
-                outline.effectDistance = new Vector2(6f, -6f); // thicker outline
+                outline.effectDistance = new Vector2(6f, -5f); // thicker outline
                 outlines.Add(outline);
             }
         }

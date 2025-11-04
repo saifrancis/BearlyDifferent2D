@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 5730574987186808913}
   - component: {fileID: 8869645133110324584}
   - component: {fileID: 2213660048591249201}
+  - component: {fileID: 4068797601525272403}
   m_Layer: 0
   m_Name: Rock2
   m_TagString: Rock
@@ -28,8 +29,8 @@ Transform:
   m_GameObject: {fileID: 6761411628276404749}
   m_LocalRotation: {x: -0, y: -0, z: -0.058422577, w: 0.99829197}
   m_LocalPosition: {x: 1.4805, y: 0.6589, z: 0}
-  m_LocalScale: {x: 1.226258, y: 1.226258, z: 1.226258}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.3, y: 0.3, z: 1.5}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -75,8 +76,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  m_Color: {r: 0.6509434, g: 0.6509434, b: 0.6509434, a: 1}
+  m_Sprite: {fileID: -1187222466, guid: aa6dd724ccad09e41bf4be83b38bd7e1, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -114,12 +115,38 @@ CapsuleCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6761411628276404749}
+  m_Enabled: 0
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: -0.6160915, y: 0.0000000103496784}
+  m_Size: {x: 2.047701, y: 2.047701}
+  m_Direction: 0
+--- !u!61 &4068797601525272403
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6761411628276404749}
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.000000048606935, y: 0}
-  m_Size: {x: 0.8155137, y: 1}
-  m_Direction: 0
+  m_Offset: {x: 0.008512497, y: -0.024849504}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0.5, y: 0.5}
+    oldSize: {x: 5.7500005, y: 2.5100002}
+    newSize: {x: 1, y: 1}
+    adaptiveTilingThreshold: 0.5
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 5.050805, y: 1.4312904}
+  m_EdgeRadius: 0
