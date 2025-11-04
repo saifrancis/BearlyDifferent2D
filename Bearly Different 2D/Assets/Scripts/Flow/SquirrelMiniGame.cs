@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
+using System.Collections;
 
 public class SquirrelMiniGame : MonoBehaviour
 {
@@ -30,6 +31,13 @@ public class SquirrelMiniGame : MonoBehaviour
     private bool isShaking;
     private Quaternion branchOriginalRotation;
 
+    public SpriteRenderer hiveSprite;    
+    public Sprite hiveNormalSprite;       
+    public Sprite hiveFallSprite;
+
+    public float successFlashDuration = 0.12f;
+    private Coroutine successFlashRoutine;
+
     void Start()
     {
         beehiveRb.bodyType = RigidbodyType2D.Kinematic;
@@ -49,6 +57,12 @@ public class SquirrelMiniGame : MonoBehaviour
         {
             TryJump();
         }
+
+        if(isShaking)
+        {
+            TriggerSuccessFlash();
+        }
+
     }
 
     /// <summary>
@@ -122,6 +136,7 @@ public class SquirrelMiniGame : MonoBehaviour
 
         beehiveRb.transform.SetParent(null);
         beehiveRb.bodyType = RigidbodyType2D.Dynamic;
+        hiveSprite.sprite = hiveFallSprite;
 
         StartCoroutine(GoToNextScene());
     }
@@ -131,4 +146,22 @@ public class SquirrelMiniGame : MonoBehaviour
         yield return new WaitForSeconds(5f);
         SceneManager.LoadScene("4Page_Four");
     }
+
+    private void TriggerSuccessFlash()
+    {
+
+        if (successFlashRoutine != null)
+            StopCoroutine(successFlashRoutine);
+
+        successFlashRoutine = StartCoroutine(SuccessFlashCo());
+    }
+
+    private IEnumerator SuccessFlashCo()
+    {
+        hiveSprite.sprite = hiveFallSprite;
+        yield return new WaitForSeconds(successFlashDuration);
+        hiveSprite.sprite = hiveNormalSprite;
+    }
+
+
 }

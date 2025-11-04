@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8055082083362926086}
   - component: {fileID: 6912956125598107221}
   - component: {fileID: -1872355448726376550}
-  - component: {fileID: -8876908508279237137}
+  - component: {fileID: 9221218669384394522}
   m_Layer: 0
   m_Name: Rock1
   m_TagString: Rock
@@ -28,8 +28,8 @@ Transform:
   m_GameObject: {fileID: 8944298773599519001}
   m_LocalRotation: {x: -0, y: -0, z: 0.10329074, w: 0.99465126}
   m_LocalPosition: {x: 1.2684, y: 0.4468, z: 0}
-  m_LocalScale: {x: 0.802, y: 0.802, z: 0.802}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 0.4, y: 0.4, z: 0.4}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
@@ -75,8 +75,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -2413806693520163455, guid: a86470a33a6bf42c4b3595704624658b, type: 3}
-  m_Color: {r: 0.41509432, g: 0.3931648, b: 0.3931648, a: 1}
+  m_Sprite: {fileID: 1199110093, guid: aa6dd724ccad09e41bf4be83b38bd7e1, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -107,7 +107,7 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
---- !u!70 &-8876908508279237137
+--- !u!70 &9221218669384394522
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -120,6 +120,6 @@ CapsuleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0.0001657336, y: 4.482237e-12}
-  m_Size: {x: 0.8031915, y: 0.9999998}
+  m_Offset: {x: 0.025177002, y: -0.014569908}
+  m_Size: {x: 2.955556, y: 2.955556}
   m_Direction: 0
