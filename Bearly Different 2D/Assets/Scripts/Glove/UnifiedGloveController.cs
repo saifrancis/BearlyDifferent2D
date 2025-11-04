@@ -32,38 +32,34 @@ public class UnifiedGloveController : MonoBehaviour
 
     private Mode mode = Mode.Pages;
 
-    // auto discovered scene refs
     private UnityEngine.Object gameManager;
     private UnityEngine.Object beehiveGame1;
     private UnityEngine.Object squirrelGame;
     private GameObject beehiveMiniGame3Object;
     private UnityEngine.Object sliderManager;
+    private UnityEngine.Object panelManager;
     private Transform playerTransform;
     private Transform[] lanes;
 
-    // discovery hints
     private const string PlayerTag = "Player";
     private const string PlayerName = "Player";
     private const string LaneTag = "Lane";
     private const string LanesParentName = "";
 
-    // serial config
     private string preferredPortName = "COM3";
     private int preferredBaud = 9600;
-    private bool expectsCsv = false; // was const, now a field to avoid CS0162
+    private bool expectsCsv = false;
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     private SerialPort _port;
 #endif
 
-    // pose templates
     private Vector3 neutralTpl = new Vector3(1.05f, 1.90f, 10.21f);
     private Vector3 downTpl = new Vector3(10.37f, 0.24f, 1.92f);
     private Vector3 leftTpl = new Vector3(1.22f, 10.36f, 3.53f);
     private Vector3 rightTpl = new Vector3(-1.53f, -9.02f, 0.16f);
     private Vector3 upTpl = new Vector3(-9.53f, 2.12f, 1.73f);
 
-    // tuning
     private float tolerance = 4f;
     private float alpha = 0.35f;
     private float dwellTime = 0.12f;
@@ -87,12 +83,10 @@ public class UnifiedGloveController : MonoBehaviour
     private float catchRadius = 0.8f;
     private bool requireLeafInCatchZone = false;
 
-    // logging
     private bool logPoses = true;
     private bool logRawSerial = true;
     private int rawLogMax = 200;
 
-    // pose state
     private Vector3 _filt;
     private string _lastEmittedPose;
     private string _candidatePose;
@@ -100,7 +94,6 @@ public class UnifiedGloveController : MonoBehaviour
     private bool _requireNeutralGate;
     private float _neutralSeenStart;
 
-    // finger window state
     private bool _windowActive;
     private float _windowStart;
     private readonly bool[] _bits = new bool[5];
@@ -108,19 +101,16 @@ public class UnifiedGloveController : MonoBehaviour
     private readonly bool[] _latchedBent = new bool[5];
     private float _lastChoiceTime = -999f;
 
-    // fist state
     private bool _fistWindowActive;
     private float _fistWindowStart;
     private readonly HashSet<string> _fingersSeen = new HashSet<string>();
     private readonly int[] _prevFlex = new int[5];
     private float _lastFistTime = -999f;
 
-    // mini game 3 state
     private int _currentLane;
     private float _lastLaneTime = -999f;
     private float _lastCatchTime = -999f;
 
-    // serial thread bridge
     private readonly ConcurrentQueue<Action> _main = new ConcurrentQueue<Action>();
     private Thread _thread;
     private volatile bool _running;
@@ -241,6 +231,7 @@ public class UnifiedGloveController : MonoBehaviour
         sliderManager = null;
         playerTransform = null;
         lanes = null;
+        panelManager = null;
 
         switch (mode)
         {
@@ -264,6 +255,8 @@ public class UnifiedGloveController : MonoBehaviour
                 ResolveLanes();
                 break;
             case Mode.Pages:
+                panelManager = FindInActiveSceneByTypeName("PanelManager");
+                break;
             default:
                 break;
         }
@@ -460,9 +453,15 @@ public class UnifiedGloveController : MonoBehaviour
     private static void CallIfPresent(UnityEngine.Object target, string method, bool condition)
     {
         if (!condition || target == null) return;
+
         var tp = target.GetType();
         var mi = tp.GetMethod(method, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
-        if (mi != null) mi.Invoke(target, null);
+        if (mi != null) { mi.Invoke(target, null); return; }
+
+        if (target is MonoBehaviour mb)
+        {
+            try { mb.gameObject.SendMessage(method, SendMessageOptions.DontRequireReceiver); } catch { }
+        }
     }
 
     private void StartFingerWindow()
@@ -603,6 +602,7 @@ public class UnifiedGloveController : MonoBehaviour
         else if (mode == Mode.MiniGame2_2) CallIfPresent(squirrelGame, "OnFist", true);
         else if (mode == Mode.MiniGame2_3 && beehiveMiniGame3Object != null) beehiveMiniGame3Object.SendMessage("SpawnRock", SendMessageOptions.DontRequireReceiver);
         else if (mode == Mode.MiniGame4) CallIfPresent(sliderManager, "GloveSelect", true);
+        else if (mode == Mode.Pages) CallIfPresent(panelManager, "TogglePanel", true);
     }
 
     private void ResetFistWindow()
@@ -728,7 +728,8 @@ public class UnifiedGloveController : MonoBehaviour
                     if (mode == Mode.Pages || mode == Mode.MiniGame3)
                         _main.Enqueue(() => AddFingerBentEvidence(idx));
 
-                    if (mode == Mode.MiniGame1 || mode == Mode.MiniGame2_1 || mode == Mode.MiniGame2_2 || mode == Mode.MiniGame2_3 || mode == Mode.MiniGame4)
+                    if (mode == Mode.MiniGame1 || mode == Mode.MiniGame2_1 || mode == Mode.MiniGame2_2 || mode == Mode.MiniGame2_3 || mode == Mode.MiniGame4
+                        || mode == Mode.Pages) // enable fist on Pages
                         _main.Enqueue(() => HandleFingerNameForFist(low));
                 }
                 else if (low.StartsWith("flex ") || low == "flex")
@@ -745,9 +746,13 @@ public class UnifiedGloveController : MonoBehaviour
                         if (ok)
                         {
                             int[] copy = (int[])bits.Clone();
-                            if (mode == Mode.Pages || mode == Mode.MiniGame3) _main.Enqueue(() => HandleFlexBitfield(copy));
-                            if (mode == Mode.MiniGame1 || mode == Mode.MiniGame2_1 || mode == Mode.MiniGame2_2 || mode == Mode.MiniGame2_3 || mode == Mode.MiniGame4)
-                                _main.Enqueue(() => HandleFlexBitfieldForFist(copy));
+
+                            if (mode == Mode.Pages || mode == Mode.MiniGame3)
+                                _main.Enqueue(() => HandleFlexBitfield(copy));
+
+                            if (mode == Mode.MiniGame1 || mode == Mode.MiniGame2_1 || mode == Mode.MiniGame2_2 || mode == Mode.MiniGame2_3 || mode == Mode.MiniGame4
+                                || mode == Mode.Pages) // enable fist on Pages
+                                _main.Enqueue(() => HandleFlexBitfieldForFist((int[])copy.Clone()));
                         }
                     }
                 }
@@ -765,8 +770,14 @@ public class UnifiedGloveController : MonoBehaviour
                         if (ok)
                         {
                             int[] copy = (int[])vals.Clone();
-                            if (mode == Mode.Pages || mode == Mode.MiniGame3) _main.Enqueue(() => HandleFlexAnalog(copy));
-                            else _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalog(copy)));
+
+                            if (mode == Mode.Pages || mode == Mode.MiniGame3)
+                                _main.Enqueue(() => HandleFlexAnalog(copy));
+
+                            if (mode != Mode.Pages && mode != Mode.MiniGame3)
+                                _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalog(copy)));
+                            else
+                                _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalog(copy))); // allow fist on Pages
                         }
                     }
                 }
