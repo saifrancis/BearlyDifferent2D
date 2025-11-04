@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿
+using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.SceneManagement;
@@ -30,7 +31,7 @@ public class PanelManager : MonoBehaviour
     [Header("Glove Control")]
     public bool useGloveInput = true;
 
-    private AccelerometerPos accRef;
+    private UnifiedGloveController accRef;
 
     private bool isChoiceScene = false;
 
@@ -75,16 +76,38 @@ public class PanelManager : MonoBehaviour
 
         if (useGloveInput)
         {
-            accRef = FindObjectOfType<AccelerometerPos>();
+            accRef = FindObjectOfType<UnifiedGloveController>();
             if (accRef != null)
+            {
                 accRef.OnPose += OnAccelPose;
+                accRef.OnChoice += OnAccelChoice;
+
+                // Map finger patterns to choices on the choice scene
+                accRef.OnChoice += n =>
+                {
+                    if (!isChoiceScene) return;
+                    if (!zoomPanelReached) return;
+                    if (isZoomedIn) return;
+
+                    if (n == 1) StartCoroutine(ZoomIn("MiniGame_2.1"));
+                    else if (n == 2) StartCoroutine(ZoomIn("MiniGame_2.2"));
+                    else if (n == 3) StartCoroutine(ZoomIn("MiniGame_2.3"));
+                };
+            }
+            else
+            {
+                Debug.LogWarning("AccelerometerPos not found for PanelManager");
+            }
         }
+
+
     }
 
     void OnDestroy()
     {
         if (accRef != null)
             accRef.OnPose -= OnAccelPose;
+        accRef.OnChoice -= OnAccelChoice;
     }
 
     private void OnAccelPose(string pose)
@@ -93,6 +116,19 @@ public class PanelManager : MonoBehaviour
         if (pose == "RIGHT")
             ShowNextPanel();
     }
+
+    private void OnAccelChoice(int n)
+    {
+        if (!useGloveInput) return;
+        if (!isChoiceScene) return;
+        if (!zoomPanelReached) return;
+        if (isZoomedIn) return;
+
+        if (n == 1) StartCoroutine(ZoomIn("MiniGame_2.1"));
+        else if (n == 2) StartCoroutine(ZoomIn("MiniGame_2.2"));
+        else if (n == 3) StartCoroutine(ZoomIn("MiniGame_2.3"));
+    }
+
 
     void Update()
     {
@@ -237,3 +273,4 @@ public class PanelManager : MonoBehaviour
             SceneManager.LoadScene(targetScene);
     }
 }
+

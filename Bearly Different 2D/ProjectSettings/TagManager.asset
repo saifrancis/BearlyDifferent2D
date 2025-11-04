@@ -7,6 +7,7 @@ TagManager:
   - Rock
   - CatchZone
   - Leaf
+  - Lane
   layers:
   - Default
   - TransparentFX

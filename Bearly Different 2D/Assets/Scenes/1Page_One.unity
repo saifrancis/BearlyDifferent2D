@@ -542,7 +542,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1121356966
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -557,15 +557,22 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   portName: COM3
   baudRate: 9600
+  useDtr: 1
+  useRts: 1
   expectsCsv: 0
-  downTpl: {x: -0.16, y: 1.61, z: 10.32}
-  neutralTpl: {x: -9.53, y: 2.12, z: 1.73}
-  leftTpl: {x: -0.77, y: 9.73, z: 5.15}
-  rightTpl: {x: -1.53, y: -9.02, z: 0.16}
+  logPoses: 1
+  readOrientationPoses: 1
+  readFingerChoices: 1
   tolerance: 4
   alpha: 0.35
   dwellTime: 0.12
   neutralRearmDwell: 0.25
+  gestureWindowSeconds: 0.6
+  choiceCooldownSeconds: 0.25
+  bendConfirmCount: 2
+  straightBaseline: f200000002010000e5000000120100000a010000
+  bentDelta: 180
+  straightDelta: 40
 --- !u!4 &1121356967
 Transform:
   m_ObjectHideFlags: 0
@@ -1224,6 +1231,117 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1665607794}
   m_CullTransparentMesh: 1
+--- !u!1 &1906565916
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1906565918}
+  - component: {fileID: 1906565917}
+  m_Layer: 0
+  m_Name: UnifiedGlove
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1906565917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1906565916}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da4756776e9c4b245b5531db6eb44956, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mode: 0
+  autoSelectModeFromScene: 1
+  gameManager: {fileID: 0}
+  beehiveGame1: {fileID: 0}
+  squirrelGame: {fileID: 0}
+  beehiveMiniGame3Object: {fileID: 0}
+  sliderManager: {fileID: 0}
+  playerTransform: {fileID: 0}
+  playerTag: Player
+  playerObjectName: Player
+  laneExactNames: []
+  lanesParentName: 
+  laneTag: 
+  fallbackOrderLanesByX: 1
+  lanes: []
+  portName: COM3
+  baudRate: 9600
+  expectsCsv: 0
+  useDtr: 1
+  useRts: 1
+  neutralTpl: {x: 1.05, y: 1.9, z: 10.21}
+  downTpl: {x: 10.37, y: 0.24, z: 1.92}
+  leftTpl: {x: 1.22, y: 10.36, z: 3.53}
+  rightTpl: {x: -1.53, y: -9.02, z: 0.16}
+  upTpl: {x: -9.53, y: 2.12, z: 1.73}
+  tolerance: 1.6
+  alpha: 0.35
+  dwellTime: 0.12
+  neutralRearmDwell: 0.25
+  gestureWindowSeconds: 0.6
+  choiceCooldownSeconds: 0.25
+  bendConfirmCount: 2
+  straightBaseline: f200000002010000e5000000120100000a010000
+  bentDelta: 180
+  straightDelta: 40
+  fistWindowSeconds: 1.5
+  fistCooldownSeconds: 0.75
+  miniGame4FistWindowSeconds: 1.25
+  miniGame4FistCooldownSeconds: 0.5
+  laneCooldownSeconds: 0.15
+  catchCooldownSeconds: 0.25
+  catchRadius: 0.8
+  requireLeafInCatchZone: 0
+  logPoses: 1
+  logRawSerial: 1
+  rawLogMax: 200
+  _filt: {x: 0, y: 0, z: 0}
+  _lastEmittedPose: 
+  _candidatePose: 
+  _candidateStart: 0
+  _requireNeutralGate: 0
+  _neutralSeenStart: 0
+  _windowActive: 0
+  _windowStart: 0
+  _lastChoiceTime: -999
+  _fistWindowActive: 0
+  _fistWindowStart: 0
+  _lastFistTime: -999
+  _currentLane: 0
+  _lastLaneTime: -999
+  _lastCatchTime: -999
+  _running: 0
+  _hasSample: 0
+  _ax: 0
+  _ay: 0
+  _az: 0
+  _rawLogged: 0
+--- !u!4 &1906565918
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1906565916}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 5
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1932498759
 GameObject:
   m_ObjectHideFlags: 0

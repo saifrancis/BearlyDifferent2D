@@ -199,6 +199,68 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 163251437}
   m_CullTransparentMesh: 1
+--- !u!1 &176246056
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 176246058}
+  - component: {fileID: 176246057}
+  m_Layer: 0
+  m_Name: AccelerometerManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &176246057
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 176246056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f3cdc3b24bc0fb4f939a5462bcf8f26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  portName: COM3
+  baudRate: 9600
+  useDtr: 1
+  useRts: 1
+  expectsCsv: 0
+  logPoses: 1
+  readOrientationPoses: 1
+  readFingerChoices: 1
+  tolerance: 4
+  alpha: 0.35
+  dwellTime: 0.12
+  neutralRearmDwell: 0.25
+  gestureWindowSeconds: 0.6
+  choiceCooldownSeconds: 0.25
+  bendConfirmCount: 2
+  straightBaseline: f200000002010000e5000000120100000a010000
+  bentDelta: 180
+  straightDelta: 40
+--- !u!4 &176246058
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 176246056}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 4
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &270199972
 GameObject:
   m_ObjectHideFlags: 0
@@ -318,6 +380,9 @@ MonoBehaviour:
   waitBeforeSceneLoad: 2
   nextSceneName: MiniGame_2.1
   useGloveInput: 1
+  togglePanel: {fileID: 0}
+  toggleKey: 104
+  toggleFadeDuration: 0.2
 --- !u!4 &412237364
 Transform:
   m_ObjectHideFlags: 0
