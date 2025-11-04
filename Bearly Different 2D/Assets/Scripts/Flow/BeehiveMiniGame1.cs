@@ -1,4 +1,4 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
 using System.Collections;
@@ -22,6 +22,21 @@ public class BeehiveMiniGame1 : MonoBehaviour
     private bool isFalling = false;
     private Vector3 startPosition;
 
+    public SpriteRenderer boSprite;   
+    public Sprite normalSprite;            
+    public Sprite hitFlashSprite;          
+    public float flashDuration = 0.12f;
+
+    private Coroutine flashRoutine;
+
+    public SpriteRenderer hiveSprite;     
+    public Sprite hiveNormalSprite;       
+    public Sprite hiveHitSprite;          
+    public float successFlashDuration = 0.12f;
+
+    private Coroutine hiveFlashRoutine;
+
+
     void Start()
     {
         beehiveRb = beehive.GetComponent<Rigidbody2D>();
@@ -40,9 +55,14 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                // Space behaves as a ìhitî attempt
+                // Space behaves as a ‚Äúhit‚Äù attempt
                 TryRegisterHit();
             }
+        }
+
+        if (isFalling)
+        {
+            hiveSprite.sprite = hiveHitSprite;
         }
     }
 
@@ -98,7 +118,7 @@ public class BeehiveMiniGame1 : MonoBehaviour
     }
 
     // ----------------------------
-    // Called by glove ìfistî action
+    // Called by glove ‚Äúfist‚Äù action
     // ----------------------------
     public void OnFist()
     {
@@ -106,7 +126,7 @@ public class BeehiveMiniGame1 : MonoBehaviour
         TryRegisterHit();
     }
 
-    // Internal: perform the hit if weíre inside the target zone
+    // Internal: perform the hit if we‚Äôre inside the target zone
     private void TryRegisterHit()
     {
         if (isFalling) return;
@@ -121,5 +141,49 @@ public class BeehiveMiniGame1 : MonoBehaviour
                 StartFalling();
             }
         }
+
+        if (IsInTargetZone())
+        {
+            TriggerHitFlash();
+            TriggerSuccessFlash(); 
+        }
+        else
+        {
+            TriggerHitFlash();  
+        }
     }
+
+    private void TriggerHitFlash()
+{
+    if (boSprite == null || hitFlashSprite == null) return;
+
+    if (flashRoutine != null)
+        StopCoroutine(flashRoutine);
+
+    flashRoutine = StartCoroutine(HitFlashCo());
+}
+
+private IEnumerator HitFlashCo()
+{
+    boSprite.sprite = hitFlashSprite;
+    yield return new WaitForSeconds(flashDuration);
+    boSprite.sprite = normalSprite;
+}
+
+    private void TriggerSuccessFlash()
+{
+    if (hiveSprite == null || hiveHitSprite == null) return;
+
+    if (hiveFlashRoutine != null)
+        StopCoroutine(hiveFlashRoutine);
+
+    hiveFlashRoutine = StartCoroutine(SuccessFlashCo());
+}
+
+private IEnumerator SuccessFlashCo()
+{
+    hiveSprite.sprite = hiveHitSprite;
+    yield return new WaitForSeconds(successFlashDuration);
+    hiveSprite.sprite = hiveNormalSprite;
+}
 }
