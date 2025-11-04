@@ -31,14 +31,25 @@ public class GameManager : MonoBehaviour
     public float wiggleScale = 1.10f;
     public float wiggleAngle = 10f;
 
+    [Header("Help")]
+    [SerializeField] private GameObject helpPanel;     // assign in Inspector
+    [SerializeField] private bool helpStartsVisible = false;
+
     void Start()
     {
+        SetActiveBerry(gridManager.grid[currentRow, currentCol]);
+        UpdateScoreUI();
+
+        if (helpPanel) helpPanel.SetActive(helpStartsVisible);   // init
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
         UpdateScoreUI();
     }
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.H))
+            ToggleHelpPanel();
+
         if (levelComplete || isResolving) return;
 
         if (!isChoosingSwap)
@@ -66,6 +77,16 @@ public class GameManager : MonoBehaviour
             MoveTo(currentRow - 1, currentCol);
         else if (Input.GetKeyDown(KeyCode.DownArrow) && currentRow < gridManager.rows - 1)
             MoveTo(currentRow + 1, currentCol);
+    }
+
+    private void ToggleHelpPanel()
+    {
+        if (!helpPanel) return;
+        bool next = !helpPanel.activeSelf;
+        helpPanel.SetActive(next);
+
+        // Optional: pause gameplay while help is open
+        // Time.timeScale = next ? 0f : 1f;
     }
 
     void HandleSwap()
