@@ -378,10 +378,10 @@ MonoBehaviour:
   berryPrefab: {fileID: 2064777995485439731, guid: 53b56448c63733c48bc25ee25c859983, type: 3}
   gridPanel: {fileID: 1161037728}
   berrySprites:
-  - {fileID: -93348457, guid: 36901413fe7d76d48a865d247d78108c, type: 3}
-  - {fileID: -429835174, guid: 36901413fe7d76d48a865d247d78108c, type: 3}
-  - {fileID: -929275207, guid: 36901413fe7d76d48a865d247d78108c, type: 3}
-  - {fileID: -1148168495, guid: 36901413fe7d76d48a865d247d78108c, type: 3}
+  - {fileID: 1609033673, guid: 65877673eb8105040833d255f0fcacea, type: 3}
+  - {fileID: 1515973298, guid: 65877673eb8105040833d255f0fcacea, type: 3}
+  - {fileID: 1982280671, guid: 65877673eb8105040833d255f0fcacea, type: 3}
+  - {fileID: 1236085811, guid: 65877673eb8105040833d255f0fcacea, type: 3}
   rows: 4
   cols: 4
 --- !u!4 &68618816
