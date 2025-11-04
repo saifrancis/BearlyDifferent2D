@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 80b4693e356f37f468967867e93ff9de
+guid: 7aba2fa190dc1204ca7e188d56662641
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -105,13 +105,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: game 2_bo_0
+      name: game 2_shakenHive_1
       rect:
         serializedVersion: 2
-        x: 585
-        y: 15
-        width: 506
-        height: 617
+        x: 299
+        y: 441
+        width: 398
+        height: 430
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -119,29 +119,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: e74b60e3c88e65445810700972ae3a65
-      internalID: 1353757084
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: game 2_bo_1
-      rect:
-        serializedVersion: 2
-        x: 1123
-        y: 13
-        width: 506
-        height: 617
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: be08fa83d3fca184397a2a5ce449a7c3
-      internalID: 1437671339
+      spriteID: 5f013f8a27baba540818355c72239c26
+      internalID: -1394043172
       vertices: []
       indices: 
       edges: []
@@ -157,8 +136,18 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      game 2_bo_0: 1353757084
-      game 2_bo_1: 1437671339
+      game 2_shakenHive_0: -1136029777
+      game 2_shakenHive_1: -1394043172
+      game 2_shakenHive_10: -721500491
+      game 2_shakenHive_11: -2128565504
+      game 2_shakenHive_2: -584179021
+      game 2_shakenHive_3: 1926404738
+      game 2_shakenHive_4: -1447697339
+      game 2_shakenHive_5: 1208424569
+      game 2_shakenHive_6: 51742146
+      game 2_shakenHive_7: 416674977
+      game 2_shakenHive_8: 1995296573
+      game 2_shakenHive_9: -1345639966
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0
