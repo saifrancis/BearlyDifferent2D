@@ -1,8 +1,8 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using TMPro;
 
 public class SliderManager : MonoBehaviour
 {
@@ -12,8 +12,6 @@ public class SliderManager : MonoBehaviour
     private List<Transform> pieces;
     private int emptyLocation;
     private int size;
-    private bool shuffling = false;
-    private bool hasShuffled = false;
 
     private int selectedIndex = 0;
     private Color originalColor = Color.white;
@@ -21,9 +19,16 @@ public class SliderManager : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI messageText;
 
+    // Target layout (using 0-based piece indices; 8 = blank)
+    // Grid indices: 0 1 2 / 3 4 5 / 6 7 8
+    // Desired grid: 4 1 3 / 7 2 5 / B 8 6
+    // Convert to 0-based piece indices: 3 0 2 / 6 1 4 / 8 7 5
+    private readonly int[] targetLayout = new int[] { 3, 0, 2, 6, 1, 4, 8, 7, 5 };
+
     private void CreateGamePieces(float gapThickness)
     {
         float width = 1 / (float)size;
+
         for (int row = 0; row < size; row++)
         {
             for (int col = 0; col < size; col++)
@@ -31,25 +36,23 @@ public class SliderManager : MonoBehaviour
                 Transform piece = Instantiate(piecePrefab, gameTransform);
                 pieces.Add(piece);
 
-                piece.localPosition = new Vector3(-1 + (2 * width * col) + width,
-                                                  +1 - (2 * width * row) - width, 0);
-
+                int index = (row * size) + col;
+                piece.localPosition = IndexToLocalPosition(index);
                 piece.localScale = ((2 * width) - gapThickness) * Vector3.one;
-                piece.name = $"Piece {(row * size) + col}";
+                piece.name = $"Piece {index}";
 
                 if (piece.TryGetComponent<SpriteRenderer>(out SpriteRenderer sr))
-                {
                     sr.color = originalColor;
-                }
 
-                if ((row == size - 1) && (col == size - 1))
+                // Hide the last piece (blank) in solved state
+                if (row == size - 1 && col == size - 1)
                 {
-                    emptyLocation = (size * size) - 1;
+                    emptyLocation = index;
                     piece.gameObject.SetActive(false);
                 }
                 else
                 {
-                    float gap = gapThickness / 2;
+                    float gap = gapThickness / 2f;
                     Mesh mesh = piece.GetComponent<MeshFilter>().mesh;
                     Vector2[] uv = new Vector2[4];
 
@@ -66,28 +69,95 @@ public class SliderManager : MonoBehaviour
         HighlightSelectedPiece();
     }
 
+    private Vector3 IndexToLocalPosition(int index)
+    {
+        float width = 1f / size;
+        int row = index / size;
+        int col = index % size;
+
+        return new Vector3(
+            -1 + (2 * width * col) + width,
+            +1 - (2 * width * row) - width,
+            0
+        );
+    }
+
     void Start()
     {
         pieces = new List<Transform>();
         size = 3;
         CreateGamePieces(0.01f);
+
+        // Start solved, show full image for 3 seconds, then apply target layout.
+        StartCoroutine(ShowSolvedThenApplyTarget());
     }
 
     void Update()
     {
-        if (!shuffling && !hasShuffled && CheckCompletion())
-        {
-            shuffling = true;
-            StartCoroutine(WaitShuffle(3f));
-        }
-
-        if (hasShuffled && !shuffling && Input.GetKeyDown(KeyCode.R))
-        {
-            StartCoroutine(Reshuffle());
-        }
-
         HandleArrowKeys();
         HandleSpacebar();
+
+        // Reset to the same fixed layout when pressing R
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ApplyTargetLayout();
+            if (messageText) messageText.text = "";
+        }
+    }
+
+    private IEnumerator ShowSolvedThenApplyTarget()
+    {
+        // Ensure solved positions (already solved right after creation, but re-affirm)
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            pieces[i].localPosition = IndexToLocalPosition(i);
+        }
+        emptyLocation = (size * size) - 1; // blank at index 8 in solved
+        selectedIndex = 0;
+        HighlightSelectedPiece();
+
+        // Show solved image for 3 seconds
+        yield return new WaitForSeconds(3f);
+
+        // Now apply your fixed shuffled layout
+        ApplyTargetLayout();
+    }
+
+    private void ApplyTargetLayout()
+    {
+        // pieces currently reference transforms; in solved state pieces[i] == tile i
+        // Build a new ordering so slot i gets tile targetLayout[i]
+        List<Transform> reordered = new List<Transform>(new Transform[size * size]);
+        for (int slot = 0; slot < targetLayout.Length; slot++)
+        {
+            int tileIndex = targetLayout[slot]; // which tile should go in this slot
+            reordered[slot] = pieces[tileIndex];
+        }
+
+        pieces = reordered;
+
+        // Reposition and find the blank
+        emptyLocation = -1;
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            pieces[i].localPosition = IndexToLocalPosition(i);
+            if (!pieces[i].gameObject.activeSelf) // the blank is inactive
+                emptyLocation = i;
+        }
+
+        // Safety fallback
+        if (emptyLocation == -1)
+        {
+            // If somehow the blank wasn't detected, assume it's the slot that holds tile index 8
+            for (int i = 0; i < targetLayout.Length; i++)
+            {
+                if (targetLayout[i] == 8) { emptyLocation = i; break; }
+            }
+        }
+
+        selectedIndex = 0;
+        HighlightSelectedPiece();
+        Debug.Log("Applied fixed target layout.");
     }
 
     private void HandleArrowKeys()
@@ -111,22 +181,20 @@ public class SliderManager : MonoBehaviour
     {
         for (int i = 0; i < pieces.Count; i++)
         {
-            Transform outline = pieces[i].Find("Outline"); 
+            Transform outline = pieces[i].Find("Outline");
             if (outline != null)
                 outline.gameObject.SetActive(i == selectedIndex);
         }
     }
 
-
     private void HandleSpacebar()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-           
             if (IsAdjacent(selectedIndex, emptyLocation))
             {
                 SwapPieces(selectedIndex, emptyLocation);
-                messageText.text = "";
+                if (messageText) messageText.text = "";
             }
             else
             {
@@ -152,10 +220,8 @@ public class SliderManager : MonoBehaviour
         (pieces[i1].localPosition, pieces[i2].localPosition) = (pieces[i2].localPosition, pieces[i1].localPosition);
         emptyLocation = i1;
 
-        if (hasShuffled && CheckCompletion())
-        {
+        if (CheckCompletion())
             StartCoroutine(GoToNextScene());
-        }
     }
 
     private bool CheckCompletion()
@@ -163,58 +229,9 @@ public class SliderManager : MonoBehaviour
         for (int i = 0; i < pieces.Count; i++)
         {
             if (pieces[i].name != $"Piece {i}")
-            {
                 return false;
-            }
         }
         return true;
-    }
-
-    private IEnumerator WaitShuffle(float duration)
-    {
-        yield return new WaitForSeconds(duration);
-        Shuffle();
-        hasShuffled = true;
-        shuffling = false;
-    }
-
-    private void Shuffle()
-    {
-        int count = 0;
-        int last = 0;
-
-        while (count < (size * size * size))
-        {
-            int rnd = Random.Range(0, size * size);
-
-            if (rnd == last) { continue; }
-            last = rnd;
-
-            if (SwapIfValid(rnd, -size, size))
-            {
-                count++;
-            }
-            else if (SwapIfValid(rnd, +size, size))
-            {
-                count++;
-            }
-            else if (SwapIfValid(rnd, -1, 0))
-            {
-                count++;
-            }
-            else if (SwapIfValid(rnd, +1, size - 1))
-            {
-                count++;
-            }
-        }
-    }
-
-    private IEnumerator Reshuffle()
-    {
-        shuffling = true;
-        yield return new WaitForSeconds(0.5f);
-        Shuffle();
-        shuffling = false;
     }
 
     private IEnumerator GoToNextScene()
@@ -223,20 +240,10 @@ public class SliderManager : MonoBehaviour
         SceneManager.LoadScene("6Page_Six");
     }
 
-    private bool SwapIfValid(int i, int offset, int colCheck)
-    {
-        if ((i % size) != colCheck && ((i + offset) == emptyLocation))
-        {
-            SwapPieces(i, i + offset);
-            return true;
-        }
-        return false;
-    }
-
     private IEnumerator ShowMessage(string text, float duration)
     {
-        messageText.text = text;
+        if (messageText) messageText.text = text;
         yield return new WaitForSeconds(duration);
-        messageText.text = "";
+        if (messageText) messageText.text = "";
     }
 }
