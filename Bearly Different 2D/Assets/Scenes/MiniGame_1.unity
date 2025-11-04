@@ -3371,6 +3371,13 @@ MonoBehaviour:
   gridManager: {fileID: 68618815}
   scoreText: {fileID: 232006467}
   matchesNeeded: 5
+  navigateColor: {r: 1, g: 0, b: 0.75262356, a: 1}
+  swapReadyColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  matchColor: {r: 0, g: 1, b: 0, a: 1}
+  enableMatchWiggle: 1
+  wiggleDuration: 0.2
+  wiggleScale: 1.1
+  wiggleAngle: 10
 --- !u!4 &1300579566
 Transform:
   m_ObjectHideFlags: 0
