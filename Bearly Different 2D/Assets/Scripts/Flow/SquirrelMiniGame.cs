@@ -22,7 +22,7 @@ public class SquirrelMiniGame : MonoBehaviour
     public float maxJumpInterval = 1.2f;
     public float branchShakeAmount = 5f;
     public float shakeDuration = 0.2f;
-    public float requiredPerfectTime = 10f;
+    public float requiredPerfectTime = 6f;
 
     private bool isGrounded;
     private float lastJumpTime;

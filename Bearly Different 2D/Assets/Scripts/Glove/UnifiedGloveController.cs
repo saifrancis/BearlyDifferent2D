@@ -1,4 +1,6 @@
+// UnifiedGloveController.cs
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Globalization;
@@ -128,6 +130,9 @@ public class UnifiedGloveController : MonoBehaviour
         new Regex(@"([-+]?\d+(?:[.,]\d+)?)[^\d+-]+([-+]?\d+(?:[.,]\d+)?)[^\d+-]+([-+]?\d+(?:[.,]\d+)?)",
                   RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    // sequence coroutine handle
+    private Coroutine _seqRoutine;
+
     private void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -185,8 +190,8 @@ public class UnifiedGloveController : MonoBehaviour
         Array.Clear(_latchedBent, 0, _latchedBent.Length);
 
         _fistWindowActive = false;
-        _fistWindowStart = 0f;
         _fingersSeen.Clear();
+        _fistWindowStart = 0f;
         Array.Clear(_prevFlex, 0, _prevFlex.Length);
 
         _lastLaneTime = -999f;
@@ -448,6 +453,18 @@ public class UnifiedGloveController : MonoBehaviour
             CallIfPresent(sliderManager, "GloveMoveUp", pose == "UP");
             CallIfPresent(sliderManager, "GloveMoveDown", pose == "DOWN");
         }
+
+        // sequences 1 to 5 for poses
+        if (pose == "RIGHT" && (mode == Mode.Pages || mode == Mode.MiniGame1 || mode == Mode.MiniGame4))
+            FlashSequence(4);
+        else if (pose == "LEFT" && (mode == Mode.Pages || mode == Mode.MiniGame1 || mode == Mode.MiniGame4))
+            FlashSequence(4);
+        else if (pose == "UP" && (mode == Mode.MiniGame1 || mode == Mode.MiniGame4))
+            FlashSequence(4);
+        else if (pose == "DOWN" && (mode == Mode.MiniGame1 || mode == Mode.MiniGame4))
+            FlashSequence(4);
+        else if (pose == "NEUTRAL" && (mode == Mode.Pages || mode == Mode.MiniGame1 || mode == Mode.MiniGame4))
+            FlashSequence(5);
     }
 
     private static void CallIfPresent(UnityEngine.Object target, string method, bool condition)
@@ -538,9 +555,9 @@ public class UnifiedGloveController : MonoBehaviour
             float now = Time.time;
             if (now - _lastLaneTime < laneCooldownSeconds) return;
 
-            if (Matches(_bits, Pat1)) { _lastLaneTime = now; SnapToLane(0); ResetFingerWindow(); return; }
-            if (Matches(_bits, Pat2)) { _lastLaneTime = now; SnapToLane(1); ResetFingerWindow(); return; }
-            if (Matches(_bits, Pat3)) { _lastLaneTime = now; SnapToLane(2); ResetFingerWindow(); return; }
+            if (Matches(_bits, Pat1)) { _lastLaneTime = now; SnapToLane(0); FlashSequence(12); ResetFingerWindow(); return; }
+            if (Matches(_bits, Pat2)) { _lastLaneTime = now; SnapToLane(1); FlashSequence(13); ResetFingerWindow(); return; }
+            if (Matches(_bits, Pat3)) { _lastLaneTime = now; SnapToLane(2); FlashSequence(14); ResetFingerWindow(); return; }
         }
     }
 
@@ -554,6 +571,14 @@ public class UnifiedGloveController : MonoBehaviour
     {
         if (logPoses) Debug.Log($"[CHOICE] {n}");
         OnChoice?.Invoke(n);
+
+        // sequences 12 to 14 for Page 3 choices
+        if ((mode == Mode.Pages && IsOnPage3()))
+        {
+            if (n == 1) FlashSequence(12);
+            else if (n == 2) FlashSequence(13);
+            else if (n == 3) FlashSequence(14);
+        }
     }
 
     private void HandleFingerNameForFist(string nameLower)
@@ -603,6 +628,12 @@ public class UnifiedGloveController : MonoBehaviour
         else if (mode == Mode.MiniGame2_3 && beehiveMiniGame3Object != null) beehiveMiniGame3Object.SendMessage("SpawnRock", SendMessageOptions.DontRequireReceiver);
         else if (mode == Mode.MiniGame4) CallIfPresent(sliderManager, "GloveSelect", true);
         else if (mode == Mode.Pages) CallIfPresent(panelManager, "TogglePanel", true);
+
+        // sequences 7 to 10 for fist per mode
+        if (mode == Mode.MiniGame1 || mode == Mode.MiniGame4) FlashSequence(7);
+        else if (mode == Mode.MiniGame2_1) FlashSequence(8);
+        else if (mode == Mode.MiniGame2_2) FlashSequence(9);
+        else if (mode == Mode.MiniGame2_3) FlashSequence(10);
     }
 
     private void ResetFistWindow()
@@ -729,7 +760,7 @@ public class UnifiedGloveController : MonoBehaviour
                         _main.Enqueue(() => AddFingerBentEvidence(idx));
 
                     if (mode == Mode.MiniGame1 || mode == Mode.MiniGame2_1 || mode == Mode.MiniGame2_2 || mode == Mode.MiniGame2_3 || mode == Mode.MiniGame4
-                        || mode == Mode.Pages) // enable fist on Pages
+                        || mode == Mode.Pages)
                         _main.Enqueue(() => HandleFingerNameForFist(low));
                 }
                 else if (low.StartsWith("flex ") || low == "flex")
@@ -751,7 +782,7 @@ public class UnifiedGloveController : MonoBehaviour
                                 _main.Enqueue(() => HandleFlexBitfield(copy));
 
                             if (mode == Mode.MiniGame1 || mode == Mode.MiniGame2_1 || mode == Mode.MiniGame2_2 || mode == Mode.MiniGame2_3 || mode == Mode.MiniGame4
-                                || mode == Mode.Pages) // enable fist on Pages
+                                || mode == Mode.Pages)
                                 _main.Enqueue(() => HandleFlexBitfieldForFist((int[])copy.Clone()));
                         }
                     }
@@ -777,13 +808,20 @@ public class UnifiedGloveController : MonoBehaviour
                             if (mode != Mode.Pages && mode != Mode.MiniGame3)
                                 _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalog(copy)));
                             else
-                                _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalog(copy))); // allow fist on Pages
+                                _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalog(copy)));
                         }
                     }
                 }
                 else if (low == "shake")
                 {
-                    if (mode == Mode.MiniGame3) _main.Enqueue(() => TriggerCatchFromShake());
+                    if (mode == Mode.MiniGame3)
+                    {
+                        _main.Enqueue(() =>
+                        {
+                            TriggerCatchFromShake();
+                            FlashSequence(11);
+                        });
+                    }
                 }
                 else
                 {
@@ -844,5 +882,33 @@ public class UnifiedGloveController : MonoBehaviour
         int[] bits = new int[5];
         for (int i = 0; i < 5 && i < vals.Length; i++) bits[i] = vals[i] > 0 ? 1 : 0;
         return bits;
+    }
+
+    // sequence helpers
+    private void SendSeq(int n)
+    {
+#if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
+        try { if (_port != null && _port.IsOpen) _port.WriteLine($"S {n}"); } catch (Exception e) { Debug.LogWarning($"SEQ send fail {e.Message}"); }
+#endif
+    }
+
+    public void FlashSequence(int n, float seconds = 2f)
+    {
+        if (_seqRoutine != null) { StopCoroutine(_seqRoutine); _seqRoutine = null; }
+        SendSeq(n);
+        _seqRoutine = StartCoroutine(StopSeqAfter(seconds));
+    }
+
+    private IEnumerator StopSeqAfter(float seconds)
+    {
+        yield return new WaitForSeconds(seconds);
+        SendSeq(0);
+        _seqRoutine = null;
+    }
+
+    private static bool IsOnPage3()
+    {
+        var s = SceneManager.GetActiveScene().name.ToLowerInvariant();
+        return s.Contains("3page");
     }
 }

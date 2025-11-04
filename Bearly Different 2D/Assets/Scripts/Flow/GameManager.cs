@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿// GameManager.cs
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -85,6 +86,10 @@ public class GameManager : MonoBehaviour
             var groups = gridManager.FindMatchGroups();
             if (groups == null || groups.Count == 0) break;
 
+            // sequence 6 for any successful match in MiniGame1
+            if (UnifiedGloveController.Instance != null)
+                UnifiedGloveController.Instance.FlashSequence(6);
+
             var flat = gridManager.FlattenUnique(groups);
             yield return StartCoroutine(gridManager.FlashMatches(flat, Color.green, 2f));
 
@@ -105,7 +110,7 @@ public class GameManager : MonoBehaviour
         }
 
         isChoosingSwap = false;
-        SetOutlineColor(activeBerry, new Color32(255, 69, 0, 255)); // OrangeRed
+        SetOutlineColor(activeBerry, new Color32(255, 69, 0, 255));
         isResolving = false;
     }
 
@@ -128,7 +133,7 @@ public class GameManager : MonoBehaviour
     void SetActiveBerry(Berry berry)
     {
         activeBerry = berry;
-        SetOutlineColor(activeBerry, new Color32(255, 69, 0, 255)); // OrangeRed
+        SetOutlineColor(activeBerry, new Color32(255, 69, 0, 255));
     }
 
     void ArmSwap()
@@ -141,7 +146,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Glove Integration Methods (for MiniGame1Glove)
+    // Glove integration methods
     public void GloveMoveLeft()
     {
         if (levelComplete || isResolving) return;
@@ -204,7 +209,6 @@ public class GameManager : MonoBehaviour
         StartCoroutine(ResolveWithCascades());
     }
 
-    // ✅ UI + Outline Helpers
     void UpdateScoreUI()
     {
         if (scoreText != null)
@@ -220,7 +224,7 @@ public class GameManager : MonoBehaviour
         {
             outline.enabled = color != Color.clear;
             outline.effectColor = color;
-            outline.effectDistance = new Vector2(5f, -5f); // thick outline
+            outline.effectDistance = new Vector2(5f, -5f);
         }
     }
 }
