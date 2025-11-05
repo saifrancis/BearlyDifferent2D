@@ -52,24 +52,20 @@ public class BeehiveMiniGame1 : MonoBehaviour
         startPosition = beehive.position;
         UpdateHitsText();
 
-        // Initialize help panel & pause state
+        // Initialize help panel (starts active)
         if (helpPanel != null)
         {
             helpPanel.SetActive(helpStartsVisible);
         }
-        ApplyPauseState(HelpVisible);
     }
 
     void Update()
     {
-        // --- Handle Help toggle FIRST so it works even while paused ---
+        // --- Handle Help toggle ---
         if (Input.GetKeyDown(KeyCode.H))
         {
             ToggleHelpPanel();
         }
-
-        // While help is up, game MUST be paused and gameplay ignored.
-        if (HelpVisible) return;
 
         // --- Normal gameplay ---
         if (!isFalling)
@@ -93,31 +89,13 @@ public class BeehiveMiniGame1 : MonoBehaviour
     private void ToggleHelpPanel()
     {
         if (helpPanel == null) return;
-
-        bool next = !helpPanel.activeSelf;
-        helpPanel.SetActive(next);
-        ApplyPauseState(next);
-    }
-
-    private void ApplyPauseState(bool paused)
-    {
-        // Pauses physics, animations, and coroutines using WaitForSeconds
-        Time.timeScale = paused ? 0f : 1f;
-
-        // Optional: ensure the panel captures input when visible
-        // var cg = helpPanel != null ? helpPanel.GetComponent<CanvasGroup>() : null;
-        // if (cg) { cg.interactable = paused; cg.blocksRaycasts = paused; }
+        helpPanel.SetActive(!helpPanel.activeSelf);
     }
 
     // ===== Game logic =====
     void SwingBeehive()
     {
-        float xOffset = Mathf.Sin(Time.unscaledTime * swingSpeed) * swingAmplitude;
-        // NOTE: using UnscaledTime here makes the swing keep updating while paused.
-        // If you want it frozen while help is open, use Time.time instead:
-        // float xOffset = Mathf.Sin(Time.time * swingSpeed) * swingAmplitude;
-
-        // If you DO want swing to stop while paused, switch back to Time.time above.
+        float xOffset = Mathf.Sin(Time.time * swingSpeed) * swingAmplitude;
         beehive.position = new Vector3(startPosition.x + xOffset, startPosition.y, startPosition.z);
     }
 
@@ -144,7 +122,6 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
     IEnumerator LoadNextSceneAfterDelay()
     {
-        // This will be paused if Time.timeScale == 0.
         yield return new WaitForSeconds(delayAfterWin);
 
         if (!string.IsNullOrEmpty(nextSceneName))
@@ -162,13 +139,11 @@ public class BeehiveMiniGame1 : MonoBehaviour
     // Called by glove “fist” action
     public void OnFist()
     {
-        if (HelpVisible) return; // block while help is open
         TryRegisterHit();
     }
 
     private void TryRegisterHit()
     {
-        if (HelpVisible) return; // block while help is open
         if (isFalling) return;
 
         if (IsInTargetZone())

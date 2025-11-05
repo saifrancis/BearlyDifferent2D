@@ -56,21 +56,17 @@ public class SquirrelMiniGame : MonoBehaviour
         if (messageText != null) messageText.text = "Jump to shake the beehive!";
         branchOriginalRotation = branchPivot.localRotation;
 
-        // Initialize help panel + pause state
+        // Initialize help panel (starts visible)
         if (helpPanel != null) helpPanel.SetActive(helpStartsVisible);
-        ApplyPauseState(HelpVisible);
     }
 
     void Update()
     {
-        // --- Help toggle FIRST so it works even while paused ---
+        // --- Help toggle ---
         if (Input.GetKeyDown(KeyCode.H))
         {
             ToggleHelpPanel();
         }
-
-        // If help is visible, keep the game paused and block gameplay input/logic.
-        if (HelpVisible) return;
 
         if (gameWon) return;
 
@@ -96,17 +92,6 @@ public class SquirrelMiniGame : MonoBehaviour
 
         bool next = !helpPanel.activeSelf;
         helpPanel.SetActive(next);
-        ApplyPauseState(next);
-    }
-
-    private void ApplyPauseState(bool paused)
-    {
-        // Pauses physics, animations, coroutines using WaitForSeconds, etc.
-        Time.timeScale = paused ? 0f : 1f;
-
-        // Optional: ensure the panel captures input when visible
-        // var cg = helpPanel != null ? helpPanel.GetComponent<CanvasGroup>() : null;
-        // if (cg) { cg.interactable = paused; cg.blocksRaycasts = paused; }
     }
 
     // --------------- External glove input ---------------
@@ -116,7 +101,7 @@ public class SquirrelMiniGame : MonoBehaviour
     /// </summary>
     public void OnFist()
     {
-        if (gameWon || HelpVisible) return;
+        if (gameWon) return;
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         TryJump();
     }
@@ -165,7 +150,7 @@ public class SquirrelMiniGame : MonoBehaviour
         float elapsed = 0f;
         while (elapsed < shakeDuration)
         {
-            elapsed += Time.deltaTime; // stops while paused
+            elapsed += Time.deltaTime;
             float zRotation = Mathf.Sin(elapsed * 40f) * branchShakeAmount;
             branchPivot.localRotation = Quaternion.Euler(0, 0, zRotation);
             yield return null;
@@ -189,7 +174,6 @@ public class SquirrelMiniGame : MonoBehaviour
 
     IEnumerator GoToNextScene()
     {
-        // Will be paused by Time.timeScale = 0 if help is shown; resume when help closes.
         yield return new WaitForSeconds(5f);
         SceneManager.LoadScene("4Page_Four");
     }
