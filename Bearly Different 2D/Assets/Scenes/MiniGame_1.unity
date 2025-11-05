@@ -3165,7 +3165,7 @@ MonoBehaviour:
   wiggleScale: 1.1
   wiggleAngle: 10
   helpPanel: {fileID: 1076236322}
-  helpStartsVisible: 0
+  helpStartsVisible: 1
 --- !u!4 &1300579566
 Transform:
   m_ObjectHideFlags: 0
