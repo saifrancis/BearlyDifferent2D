@@ -1007,7 +1007,7 @@ MonoBehaviour:
   maxJumpInterval: 1.2
   branchShakeAmount: 5
   shakeDuration: 0.2
-  requiredPerfectTime: 10
+  requiredPerfectTime: 6
   hiveSprite: {fileID: 960483880}
   hiveNormalSprite: {fileID: -1307798419, guid: 342dcb3766b7ddd499a449dde02889d2, type: 3}
   hiveFallSprite: {fileID: -1394043172, guid: 7aba2fa190dc1204ca7e188d56662641, type: 3}
@@ -1426,7 +1426,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1555963918
 Transform:
   m_ObjectHideFlags: 0

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿// GameManager.cs
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -31,14 +32,25 @@ public class GameManager : MonoBehaviour
     public float wiggleScale = 1.10f;
     public float wiggleAngle = 10f;
 
+    [Header("Help")]
+    [SerializeField] private GameObject helpPanel;     // assign in Inspector
+    [SerializeField] private bool helpStartsVisible = false;
+
     void Start()
     {
+        SetActiveBerry(gridManager.grid[currentRow, currentCol]);
+        UpdateScoreUI();
+
+        if (helpPanel) helpPanel.SetActive(helpStartsVisible);   // init
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
         UpdateScoreUI();
     }
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.H))
+            ToggleHelpPanel();
+
         if (levelComplete || isResolving) return;
 
         if (!isChoosingSwap)
@@ -68,6 +80,16 @@ public class GameManager : MonoBehaviour
             MoveTo(currentRow + 1, currentCol);
     }
 
+    private void ToggleHelpPanel()
+    {
+        if (!helpPanel) return;
+        bool next = !helpPanel.activeSelf;
+        helpPanel.SetActive(next);
+
+        // Optional: pause gameplay while help is open
+        // Time.timeScale = next ? 0f : 1f;
+    }
+
     void HandleSwap()
     {
         int targetRow = currentRow;
@@ -95,6 +117,10 @@ public class GameManager : MonoBehaviour
         {
             var groups = gridManager.FindMatchGroups();
             if (groups == null || groups.Count == 0) break;
+
+            // sequence 6 for any successful match in MiniGame1
+            if (UnifiedGloveController.Instance != null)
+                UnifiedGloveController.Instance.FlashSequence(6);
 
             var flat = gridManager.FlattenUnique(groups);
 
@@ -159,7 +185,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Glove Integration Methods (for MiniGame1Glove)
+    // Glove integration methods
     public void GloveMoveLeft()
     {
         if (levelComplete || isResolving) return;
@@ -222,7 +248,6 @@ public class GameManager : MonoBehaviour
         StartCoroutine(ResolveWithCascades());
     }
 
-    // ✅ UI + Outline Helpers
     void UpdateScoreUI()
     {
         if (scoreText != null)
