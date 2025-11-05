@@ -5,6 +5,7 @@ using System.Collections;
 
 public class BeehiveMiniGame1 : MonoBehaviour
 {
+    [Header("Core")]
     public Transform beehive;
     public Transform targetZone;
     public float swingAmplitude = 0.5f;
@@ -22,50 +23,76 @@ public class BeehiveMiniGame1 : MonoBehaviour
     private bool isFalling = false;
     private Vector3 startPosition;
 
-    public SpriteRenderer boSprite;   
-    public Sprite normalSprite;            
-    public Sprite hitFlashSprite;          
+    [Header("Sprites / Feedback")]
+    public SpriteRenderer boSprite;
+    public Sprite normalSprite;
+    public Sprite hitFlashSprite;
     public float flashDuration = 0.12f;
-
     private Coroutine flashRoutine;
 
-    public SpriteRenderer hiveSprite;     
-    public Sprite hiveNormalSprite;       
-    public Sprite hiveHitSprite;          
+    public SpriteRenderer hiveSprite;
+    public Sprite hiveNormalSprite;
+    public Sprite hiveHitSprite;
     public float successFlashDuration = 0.12f;
-
     private Coroutine hiveFlashRoutine;
 
+    [Header("Help (Toggle with H)")]
+    [SerializeField] private GameObject helpPanel;       // Assign a full-screen UI Panel under your Canvas
+    [SerializeField] private bool helpStartsVisible = true;
+
+    private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
 
     void Start()
     {
+        // Setup beehive
         beehiveRb = beehive.GetComponent<Rigidbody2D>();
         if (beehiveRb == null) Debug.LogError("Beehive needs Rigidbody2D!");
 
         beehiveRb.bodyType = RigidbodyType2D.Kinematic;
         startPosition = beehive.position;
         UpdateHitsText();
+
+        // Initialize help panel (starts active)
+        if (helpPanel != null)
+        {
+            helpPanel.SetActive(helpStartsVisible);
+        }
     }
 
     void Update()
     {
+        // --- Handle Help toggle ---
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            ToggleHelpPanel();
+        }
+
+        // --- Normal gameplay ---
         if (!isFalling)
         {
             SwingBeehive();
 
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                // Space behaves as a “hit” attempt
                 TryRegisterHit();
             }
         }
 
         if (isFalling)
         {
-            hiveSprite.sprite = hiveHitSprite;
+            if (hiveSprite != null && hiveHitSprite != null)
+                hiveSprite.sprite = hiveHitSprite;
         }
     }
 
+    // ===== Help control =====
+    private void ToggleHelpPanel()
+    {
+        if (helpPanel == null) return;
+        helpPanel.SetActive(!helpPanel.activeSelf);
+    }
+
+    // ===== Game logic =====
     void SwingBeehive()
     {
         float xOffset = Mathf.Sin(Time.time * swingSpeed) * swingAmplitude;
@@ -74,9 +101,6 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
     bool IsInTargetZone()
     {
-        float left = targetZone.position.x - targetZone.localScale.x / 2;
-        float right = targetZone.position.x + targetZone.localScale.x / 2;
-
         float halfWidth = beehive.GetComponent<SpriteRenderer>().bounds.size.x / 2f;
         float hiveLeft = beehive.position.x - halfWidth;
         float hiveRight = beehive.position.x + halfWidth;
@@ -84,7 +108,6 @@ public class BeehiveMiniGame1 : MonoBehaviour
         float zoneLeft = targetZone.position.x - targetZone.localScale.x / 2f;
         float zoneRight = targetZone.position.x + targetZone.localScale.x / 2f;
 
-        // Check if any part of the hive overlaps with the zone
         return hiveRight >= zoneLeft && hiveLeft <= zoneRight;
     }
 
@@ -102,13 +125,9 @@ public class BeehiveMiniGame1 : MonoBehaviour
         yield return new WaitForSeconds(delayAfterWin);
 
         if (!string.IsNullOrEmpty(nextSceneName))
-        {
             SceneManager.LoadScene(nextSceneName);
-        }
         else
-        {
             Debug.LogError("Next scene name is not set!");
-        }
     }
 
     void UpdateHitsText()
@@ -117,16 +136,12 @@ public class BeehiveMiniGame1 : MonoBehaviour
             hitsText.text = $"Hits: {hitCount} / {requiredHits}";
     }
 
-    // ----------------------------
     // Called by glove “fist” action
-    // ----------------------------
     public void OnFist()
     {
-        // Same action as pressing Space
         TryRegisterHit();
     }
 
-    // Internal: perform the hit if we’re inside the target zone
     private void TryRegisterHit()
     {
         if (isFalling) return;
@@ -145,45 +160,45 @@ public class BeehiveMiniGame1 : MonoBehaviour
         if (IsInTargetZone())
         {
             TriggerHitFlash();
-            TriggerSuccessFlash(); 
+            TriggerSuccessFlash();
         }
         else
         {
-            TriggerHitFlash();  
+            TriggerHitFlash();
         }
     }
 
     private void TriggerHitFlash()
-{
-    if (boSprite == null || hitFlashSprite == null) return;
+    {
+        if (boSprite == null || hitFlashSprite == null || normalSprite == null) return;
 
-    if (flashRoutine != null)
-        StopCoroutine(flashRoutine);
+        if (flashRoutine != null)
+            StopCoroutine(flashRoutine);
 
-    flashRoutine = StartCoroutine(HitFlashCo());
-}
+        flashRoutine = StartCoroutine(HitFlashCo());
+    }
 
-private IEnumerator HitFlashCo()
-{
-    boSprite.sprite = hitFlashSprite;
-    yield return new WaitForSeconds(flashDuration);
-    boSprite.sprite = normalSprite;
-}
+    private IEnumerator HitFlashCo()
+    {
+        boSprite.sprite = hitFlashSprite;
+        yield return new WaitForSeconds(flashDuration);
+        boSprite.sprite = normalSprite;
+    }
 
     private void TriggerSuccessFlash()
-{
-    if (hiveSprite == null || hiveHitSprite == null) return;
+    {
+        if (hiveSprite == null || hiveHitSprite == null || hiveNormalSprite == null) return;
 
-    if (hiveFlashRoutine != null)
-        StopCoroutine(hiveFlashRoutine);
+        if (hiveFlashRoutine != null)
+            StopCoroutine(hiveFlashRoutine);
 
-    hiveFlashRoutine = StartCoroutine(SuccessFlashCo());
-}
+        hiveFlashRoutine = StartCoroutine(SuccessFlashCo());
+    }
 
-private IEnumerator SuccessFlashCo()
-{
-    hiveSprite.sprite = hiveHitSprite;
-    yield return new WaitForSeconds(successFlashDuration);
-    hiveSprite.sprite = hiveNormalSprite;
-}
+    private IEnumerator SuccessFlashCo()
+    {
+        hiveSprite.sprite = hiveHitSprite;
+        yield return new WaitForSeconds(successFlashDuration);
+        hiveSprite.sprite = hiveNormalSprite;
+    }
 }
