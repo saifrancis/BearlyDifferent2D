@@ -1440,8 +1440,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1675.7, y: -738}
-  m_SizeDelta: {x: 1589.5166, y: 894.2185}
+  m_AnchoredPosition: {x: -1548, y: -643}
+  m_SizeDelta: {x: 1359.4897, y: 764.8116}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &390295756
 MonoBehaviour:
@@ -2348,7 +2348,7 @@ GameObject:
   - component: {fileID: 919337950}
   - component: {fileID: 919337949}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: OpenCloseTxt
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2371,7 +2371,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -929, y: -470}
+  m_AnchoredPosition: {x: -1003, y: -431}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &919337949
@@ -2394,7 +2394,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Close
+  m_text: 'Open/ Close
+
+    instructions'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 70ecf71434fe9f346ac7895e22650bed, type: 2}
   m_sharedMaterial: {fileID: -7268096782618831508, guid: 70ecf71434fe9f346ac7895e22650bed, type: 2}
@@ -2428,12 +2430,12 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
+  m_HorizontalAlignment: 2
   m_VerticalAlignment: 256
   m_textAlignment: 65535
   m_characterSpacing: 13.8
   m_wordSpacing: 0
-  m_lineSpacing: 0
+  m_lineSpacing: -16.71
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
@@ -2457,7 +2459,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: 0, z: -106.79358, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0

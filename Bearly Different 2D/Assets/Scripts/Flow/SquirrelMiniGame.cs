@@ -24,6 +24,18 @@ public class SquirrelMiniGame : MonoBehaviour
     public float shakeDuration = 0.2f;
     public float requiredPerfectTime = 6f;
 
+    [Header("Beehive Sprites")]
+    public SpriteRenderer hiveSprite;
+    public Sprite hiveNormalSprite;
+    public Sprite hiveFallSprite;
+
+    public float successFlashDuration = 0.12f;
+
+    [Header("Help (Toggle with H)")]
+    [SerializeField] private GameObject helpPanel;         // Assign a full-screen Panel under your Canvas
+    [SerializeField] private bool helpStartsVisible = true;
+
+    // --------------- Private state ---------------
     private bool isGrounded;
     private float lastJumpTime;
     private float perfectRhythmTimer;
@@ -31,25 +43,38 @@ public class SquirrelMiniGame : MonoBehaviour
     private bool isShaking;
     private Quaternion branchOriginalRotation;
 
-    public SpriteRenderer hiveSprite;    
-    public Sprite hiveNormalSprite;       
-    public Sprite hiveFallSprite;
-
-    public float successFlashDuration = 0.12f;
     private Coroutine successFlashRoutine;
 
+    private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
+
+    // --------------- Unity ---------------
     void Start()
     {
+        // Setup beehive and UI
         beehiveRb.bodyType = RigidbodyType2D.Kinematic;
         perfectRhythmTimer = 0f;
-        messageText.text = "Jump to shake the beehive!";
+        if (messageText != null) messageText.text = "Jump to shake the beehive!";
         branchOriginalRotation = branchPivot.localRotation;
+
+        // Initialize help panel + pause state
+        if (helpPanel != null) helpPanel.SetActive(helpStartsVisible);
+        ApplyPauseState(HelpVisible);
     }
 
     void Update()
     {
+        // --- Help toggle FIRST so it works even while paused ---
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            ToggleHelpPanel();
+        }
+
+        // If help is visible, keep the game paused and block gameplay input/logic.
+        if (HelpVisible) return;
+
         if (gameWon) return;
 
+        // Ground check & input
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
         // Keyboard input: Space → same behaviour as glove fist
@@ -58,24 +83,45 @@ public class SquirrelMiniGame : MonoBehaviour
             TryJump();
         }
 
-        if(isShaking)
+        if (isShaking)
         {
             TriggerSuccessFlash();
         }
-
     }
 
+    // --------------- Help control ---------------
+    private void ToggleHelpPanel()
+    {
+        if (helpPanel == null) return;
+
+        bool next = !helpPanel.activeSelf;
+        helpPanel.SetActive(next);
+        ApplyPauseState(next);
+    }
+
+    private void ApplyPauseState(bool paused)
+    {
+        // Pauses physics, animations, coroutines using WaitForSeconds, etc.
+        Time.timeScale = paused ? 0f : 1f;
+
+        // Optional: ensure the panel captures input when visible
+        // var cg = helpPanel != null ? helpPanel.GetComponent<CanvasGroup>() : null;
+        // if (cg) { cg.interactable = paused; cg.blocksRaycasts = paused; }
+    }
+
+    // --------------- External glove input ---------------
     /// <summary>
     /// Called by the glove script when a fist is detected.
     /// Mirrors pressing Space (only jumps if grounded).
     /// </summary>
     public void OnFist()
     {
-        if (gameWon) return;
+        if (gameWon || HelpVisible) return;
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
         TryJump();
     }
 
+    // --------------- Gameplay ---------------
     private void TryJump()
     {
         if (!isGrounded) return;
@@ -90,17 +136,17 @@ public class SquirrelMiniGame : MonoBehaviour
         // Rhythm feedback
         if (interval < minJumpInterval)
         {
-            messageText.text = "Pip is exhausted... too fast!";
+            if (messageText) messageText.text = "Pip is exhausted... too fast!";
             perfectRhythmTimer = 0f;
         }
         else if (interval > maxJumpInterval)
         {
-            messageText.text = "A little more effort!";
+            if (messageText) messageText.text = "A little more effort!";
             perfectRhythmTimer = 0f;
         }
         else
         {
-            messageText.text = "Perfect rhythm!";
+            if (messageText) messageText.text = "Perfect rhythm!";
             if (!isShaking) StartCoroutine(ShakeBranch());
 
             perfectRhythmTimer += interval;
@@ -112,14 +158,14 @@ public class SquirrelMiniGame : MonoBehaviour
         }
     }
 
-    System.Collections.IEnumerator ShakeBranch()
+    IEnumerator ShakeBranch()
     {
         isShaking = true;
 
         float elapsed = 0f;
         while (elapsed < shakeDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.deltaTime; // stops while paused
             float zRotation = Mathf.Sin(elapsed * 40f) * branchShakeAmount;
             branchPivot.localRotation = Quaternion.Euler(0, 0, zRotation);
             yield return null;
@@ -132,24 +178,24 @@ public class SquirrelMiniGame : MonoBehaviour
     void WinGame()
     {
         gameWon = true;
-        messageText.text = "The beehive falls!";
+        if (messageText) messageText.text = "The beehive falls!";
 
         beehiveRb.transform.SetParent(null);
         beehiveRb.bodyType = RigidbodyType2D.Dynamic;
-        hiveSprite.sprite = hiveFallSprite;
+        if (hiveSprite) hiveSprite.sprite = hiveFallSprite;
 
         StartCoroutine(GoToNextScene());
     }
 
-    System.Collections.IEnumerator GoToNextScene()
+    IEnumerator GoToNextScene()
     {
+        // Will be paused by Time.timeScale = 0 if help is shown; resume when help closes.
         yield return new WaitForSeconds(5f);
         SceneManager.LoadScene("4Page_Four");
     }
 
     private void TriggerSuccessFlash()
     {
-
         if (successFlashRoutine != null)
             StopCoroutine(successFlashRoutine);
 
@@ -158,10 +204,15 @@ public class SquirrelMiniGame : MonoBehaviour
 
     private IEnumerator SuccessFlashCo()
     {
-        hiveSprite.sprite = hiveFallSprite;
-        yield return new WaitForSeconds(successFlashDuration);
-        hiveSprite.sprite = hiveNormalSprite;
+        if (hiveSprite != null)
+        {
+            hiveSprite.sprite = hiveFallSprite;
+            yield return new WaitForSeconds(successFlashDuration);
+            hiveSprite.sprite = hiveNormalSprite;
+        }
+        else
+        {
+            yield return null;
+        }
     }
-
-
 }
