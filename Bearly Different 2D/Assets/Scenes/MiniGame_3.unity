@@ -3650,6 +3650,8 @@ MonoBehaviour:
   - {fileID: 1891767550}
   spawnInterval: 2
   scoreText: {fileID: 26787937}
+  helpPanel: {fileID: 27705438}
+  helpStartsVisible: 1
 --- !u!4 &1637696852
 Transform:
   m_ObjectHideFlags: 0
