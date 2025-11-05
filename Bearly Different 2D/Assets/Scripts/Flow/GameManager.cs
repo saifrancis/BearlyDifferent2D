@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿// GameManager.cs
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -117,6 +118,10 @@ public class GameManager : MonoBehaviour
             var groups = gridManager.FindMatchGroups();
             if (groups == null || groups.Count == 0) break;
 
+            // sequence 6 for any successful match in MiniGame1
+            if (UnifiedGloveController.Instance != null)
+                UnifiedGloveController.Instance.FlashSequence(6);
+
             var flat = gridManager.FlattenUnique(groups);
 
             // 1) Optional wiggle on each matched berry
@@ -180,7 +185,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ✅ Glove Integration Methods (for MiniGame1Glove)
+    // Glove integration methods
     public void GloveMoveLeft()
     {
         if (levelComplete || isResolving) return;
@@ -243,7 +248,6 @@ public class GameManager : MonoBehaviour
         StartCoroutine(ResolveWithCascades());
     }
 
-    // ✅ UI + Outline Helpers
     void UpdateScoreUI()
     {
         if (scoreText != null)
