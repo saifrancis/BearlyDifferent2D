@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class SliderManager : MonoBehaviour
 {
+    [Header("Board Setup")]
     [SerializeField] private Transform gameTransform;
     [SerializeField] private Transform piecePrefab;
 
@@ -17,7 +18,12 @@ public class SliderManager : MonoBehaviour
     private Color originalColor = Color.white;
     private Color highlightColor = Color.red;
 
+    [Header("UI")]
     [SerializeField] private TextMeshProUGUI messageText;
+
+    [Header("Help Panel")]
+    [SerializeField] private GameObject helpPanel;          // Assign in Inspector
+    [SerializeField] private bool helpStartsVisible = true; // Panel starts active
 
     // Target layout (using 0-based piece indices; 8 = blank)
     // Grid indices: 0 1 2 / 3 4 5 / 6 7 8
@@ -25,6 +31,48 @@ public class SliderManager : MonoBehaviour
     // Convert to 0-based piece indices: 3 0 2 / 6 1 4 / 8 7 5
     private readonly int[] targetLayout = new int[] { 3, 0, 2, 6, 1, 4, 8, 7, 5 };
 
+    // ---------- Unity ----------
+    void Start()
+    {
+        pieces = new List<Transform>();
+        size = 3;
+        CreateGamePieces(0.01f);
+
+        // Help panel starts active (no pause)
+        if (helpPanel != null)
+            helpPanel.SetActive(helpStartsVisible);
+
+        // Start solved, show full image briefly, then apply target layout
+        StartCoroutine(ShowSolvedThenApplyTarget());
+    }
+
+    void Update()
+    {
+        // Toggle help with H
+        if (Input.GetKeyDown(KeyCode.H))
+        {
+            ToggleHelpPanel();
+        }
+
+        HandleArrowKeys();
+        HandleSpacebar();
+
+        // Reset to the same fixed layout when pressing R
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ApplyTargetLayout();
+            if (messageText) messageText.text = "";
+        }
+    }
+
+    // ---------- Help ----------
+    private void ToggleHelpPanel()
+    {
+        if (helpPanel == null) return;
+        helpPanel.SetActive(!helpPanel.activeSelf);
+    }
+
+    // ---------- Board / Pieces ----------
     private void CreateGamePieces(float gapThickness)
     {
         float width = 1 / (float)size;
@@ -82,36 +130,12 @@ public class SliderManager : MonoBehaviour
         );
     }
 
-    void Start()
-    {
-        pieces = new List<Transform>();
-        size = 3;
-        CreateGamePieces(0.01f);
-
-        // Start solved, show full image for 3 seconds, then apply target layout.
-        StartCoroutine(ShowSolvedThenApplyTarget());
-    }
-
-    void Update()
-    {
-        HandleArrowKeys();
-        HandleSpacebar();
-
-        // Reset to the same fixed layout when pressing R
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            ApplyTargetLayout();
-            if (messageText) messageText.text = "";
-        }
-    }
-
     private IEnumerator ShowSolvedThenApplyTarget()
     {
-        // Ensure solved positions (already solved right after creation, but re-affirm)
+        // Ensure solved positions
         for (int i = 0; i < pieces.Count; i++)
-        {
             pieces[i].localPosition = IndexToLocalPosition(i);
-        }
+
         emptyLocation = (size * size) - 1; // blank at index 8 in solved
         selectedIndex = 0;
         HighlightSelectedPiece();
@@ -119,13 +143,12 @@ public class SliderManager : MonoBehaviour
         // Show solved image for 3 seconds
         yield return new WaitForSeconds(3f);
 
-        // Now apply your fixed shuffled layout
+        // Apply fixed shuffled layout
         ApplyTargetLayout();
     }
 
     private void ApplyTargetLayout()
     {
-        // pieces currently reference transforms; in solved state pieces[i] == tile i
         // Build a new ordering so slot i gets tile targetLayout[i]
         List<Transform> reordered = new List<Transform>(new Transform[size * size]);
         for (int slot = 0; slot < targetLayout.Length; slot++)
@@ -148,7 +171,6 @@ public class SliderManager : MonoBehaviour
         // Safety fallback
         if (emptyLocation == -1)
         {
-            // If somehow the blank wasn't detected, assume it's the slot that holds tile index 8
             for (int i = 0; i < targetLayout.Length; i++)
             {
                 if (targetLayout[i] == 8) { emptyLocation = i; break; }
@@ -160,6 +182,7 @@ public class SliderManager : MonoBehaviour
         Debug.Log("Applied fixed target layout.");
     }
 
+    // ---------- Input / Selection ----------
     private void HandleArrowKeys()
     {
         int previousIndex = selectedIndex;
@@ -247,48 +270,45 @@ public class SliderManager : MonoBehaviour
         if (messageText) messageText.text = "";
     }
 
-    // ⬇️ Put these inside your existing SliderManager class
-
-// --- Public API used by the glove ---
-public void GloveMoveLeft()
-{
-    int previous = selectedIndex;
-    if (selectedIndex % size > 0) selectedIndex--;
-    if (previous != selectedIndex) HighlightSelectedPiece();
-}
-
-public void GloveMoveRight()
-{
-    int previous = selectedIndex;
-    if (selectedIndex % size < size - 1) selectedIndex++;
-    if (previous != selectedIndex) HighlightSelectedPiece();
-}
-
-public void GloveMoveUp()
-{
-    int previous = selectedIndex;
-    if (selectedIndex >= size) selectedIndex -= size;
-    if (previous != selectedIndex) HighlightSelectedPiece();
-}
-
-public void GloveMoveDown()
-{
-    int previous = selectedIndex;
-    if (selectedIndex < pieces.Count - size) selectedIndex += size;
-    if (previous != selectedIndex) HighlightSelectedPiece();
-}
-
-public void GloveSelect()  // same as pressing Space
-{
-    if (IsAdjacent(selectedIndex, emptyLocation))
+    // ---------- Glove API ----------
+    public void GloveMoveLeft()
     {
-        SwapPieces(selectedIndex, emptyLocation);
-        if (messageText != null) messageText.text = "";
+        int previous = selectedIndex;
+        if (selectedIndex % size > 0) selectedIndex--;
+        if (previous != selectedIndex) HighlightSelectedPiece();
     }
-    else
-    {
-        if (messageText != null) StartCoroutine(ShowMessage("Piece can't be moved", 2f));
-    }
-}
 
+    public void GloveMoveRight()
+    {
+        int previous = selectedIndex;
+        if (selectedIndex % size < size - 1) selectedIndex++;
+        if (previous != selectedIndex) HighlightSelectedPiece();
+    }
+
+    public void GloveMoveUp()
+    {
+        int previous = selectedIndex;
+        if (selectedIndex >= size) selectedIndex -= size;
+        if (previous != selectedIndex) HighlightSelectedPiece();
+    }
+
+    public void GloveMoveDown()
+    {
+        int previous = selectedIndex;
+        if (selectedIndex < pieces.Count - size) selectedIndex += size;
+        if (previous != selectedIndex) HighlightSelectedPiece();
+    }
+
+    public void GloveSelect() // same as pressing Space
+    {
+        if (IsAdjacent(selectedIndex, emptyLocation))
+        {
+            SwapPieces(selectedIndex, emptyLocation);
+            if (messageText != null) messageText.text = "";
+        }
+        else
+        {
+            if (messageText != null) StartCoroutine(ShowMessage("Piece can't be moved", 2f));
+        }
+    }
 }
