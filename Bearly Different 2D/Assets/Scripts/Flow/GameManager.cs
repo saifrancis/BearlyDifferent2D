@@ -8,16 +8,13 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("Core")]
     public GridManager gridManager;
     public TextMeshProUGUI scoreText;
 
-    // Grid selection
     private int currentRow = 0;
     private int currentCol = 0;
     private Berry activeBerry;
 
-    // State
     private bool isChoosingSwap = false;
     private int successfulMatches = 0;
     public int matchesNeeded = 5;
@@ -35,48 +32,25 @@ public class GameManager : MonoBehaviour
     public float wiggleScale = 1.10f;
     public float wiggleAngle = 10f;
 
-    [Header("Help (One-Time Startup Page)")]
-    [SerializeField] private GameObject helpPanel; // assign a full-screen Panel under the Canvas
-    [SerializeField] private bool helpStartsVisible = true;
-
-    // Internal flags for help logic
-    private bool helpVisible = false;
-    private bool helpDismissed = false;
+    [Header("Help")]
+    [SerializeField] private GameObject helpPanel;     // assign in Inspector
+    [SerializeField] private bool helpStartsVisible = false;
 
     void Start()
     {
-        // Initialize selection/UI
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
         UpdateScoreUI();
 
-        // One-time help page: start visible and pause the game
-        if (helpPanel != null && helpStartsVisible && !helpDismissed)
-        {
-            ShowHelpBlocking();
-        }
-        else
-        {
-            HideHelpAndResume(); // ensure normal time scale if help is not used
-        }
+        if (helpPanel) helpPanel.SetActive(helpStartsVisible);   // init
+        SetActiveBerry(gridManager.grid[currentRow, currentCol]);
+        UpdateScoreUI();
     }
 
     void Update()
     {
-        // Handle one-time help dismissal FIRST so it works even when other states would early-return
-        if (helpVisible && !helpDismissed)
-        {
-            if (Input.GetKeyDown(KeyCode.H))
-            {
-                // Permanently dismiss the help
-                helpDismissed = true;
-                HideHelpAndResume();
-            }
+        if (Input.GetKeyDown(KeyCode.H))
+            ToggleHelpPanel();
 
-            // While help is visible, block all gameplay logic
-            return;
-        }
-
-        // Normal gameplay from here
         if (levelComplete || isResolving) return;
 
         if (!isChoosingSwap)
@@ -94,32 +68,6 @@ public class GameManager : MonoBehaviour
             SceneManager.LoadScene("1Page_One");
     }
 
-    // ===== Help control =====
-    private void ShowHelpBlocking()
-    {
-        helpVisible = true;
-        if (helpPanel) helpPanel.SetActive(true);
-
-        // Pause the game completely while help is shown
-        Time.timeScale = 0f;
-
-        // Optional: also block UI input to game beneath (if needed, ensure the help panel has its own Canvas Group)
-        // var cg = helpPanel.GetComponent<CanvasGroup>();
-        // if (cg) { cg.interactable = true; cg.blocksRaycasts = true; }
-    }
-
-    private void HideHelpAndResume()
-    {
-        helpVisible = false;
-        if (helpPanel) helpPanel.SetActive(false);
-
-        // Resume game time
-        Time.timeScale = 1f;
-
-        // After dismissal, H no longer does anything (helpDismissed=true prevents re-entry)
-    }
-
-    // ===== Movement / Swap =====
     void HandleNavigation()
     {
         if (Input.GetKeyDown(KeyCode.RightArrow) && currentCol < gridManager.cols - 1)
@@ -130,6 +78,15 @@ public class GameManager : MonoBehaviour
             MoveTo(currentRow - 1, currentCol);
         else if (Input.GetKeyDown(KeyCode.DownArrow) && currentRow < gridManager.rows - 1)
             MoveTo(currentRow + 1, currentCol);
+    }
+
+    private void ToggleHelpPanel()
+    {
+        if (!helpPanel) return;
+        bool next = !helpPanel.activeSelf;
+        helpPanel.SetActive(next);
+
+       
     }
 
     void HandleSwap()
@@ -160,7 +117,7 @@ public class GameManager : MonoBehaviour
             var groups = gridManager.FindMatchGroups();
             if (groups == null || groups.Count == 0) break;
 
-            // sequence 6 for any successful match in MiniGame1 (kept from your original)
+            // sequence 6 for any successful match in MiniGame1
             if (UnifiedGloveController.Instance != null)
                 UnifiedGloveController.Instance.FlashSequence(6);
 
@@ -170,10 +127,10 @@ public class GameManager : MonoBehaviour
             if (enableMatchWiggle)
                 yield return StartCoroutine(WiggleGroup(flat, wiggleDuration, wiggleScale, wiggleAngle));
 
-            // 2) Green flash (uses matchColor)
+            // 2) Your existing green flash (now uses matchColor from Inspector)
             yield return StartCoroutine(gridManager.FlashMatches(flat, matchColor, 2f));
 
-            // 3) Remove & collapse
+            // 3) Remove & collapse like before
             gridManager.RemoveAndCollapse(flat);
 
             successfulMatches += groups.Count;
@@ -204,7 +161,7 @@ public class GameManager : MonoBehaviour
     void MoveTo(int newRow, int newCol)
     {
         if (activeBerry != null)
-            SetOutlineColor(activeBerry, Color.clear);
+            SetOutlineColor(activeBerry, Color.clear); 
 
         currentRow = newRow;
         currentCol = newCol;
@@ -227,38 +184,38 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    // ===== Glove integration methods =====
+    // Glove integration methods
     public void GloveMoveLeft()
     {
-        if (levelComplete || isResolving || helpVisible) return;
+        if (levelComplete || isResolving) return;
         if (!isChoosingSwap) TryMove(0, -1);
         else TrySwapDir(0, -1);
     }
 
     public void GloveMoveRight()
     {
-        if (levelComplete || isResolving || helpVisible) return;
+        if (levelComplete || isResolving) return;
         if (!isChoosingSwap) TryMove(0, 1);
         else TrySwapDir(0, 1);
     }
 
     public void GloveMoveUp()
     {
-        if (levelComplete || isResolving || helpVisible) return;
+        if (levelComplete || isResolving) return;
         if (!isChoosingSwap) TryMove(-1, 0);
         else TrySwapDir(-1, 0);
     }
 
     public void GloveMoveDown()
     {
-        if (levelComplete || isResolving || helpVisible) return;
+        if (levelComplete || isResolving) return;
         if (!isChoosingSwap) TryMove(1, 0);
         else TrySwapDir(1, 0);
     }
 
     public void GloveSelectOrSwapArm()
     {
-        if (levelComplete || isResolving || helpVisible) return;
+        if (levelComplete || isResolving) return;
         if (!isChoosingSwap)
         {
             isChoosingSwap = true;
@@ -290,7 +247,6 @@ public class GameManager : MonoBehaviour
         StartCoroutine(ResolveWithCascades());
     }
 
-    // ===== UI helpers =====
     void UpdateScoreUI()
     {
         if (scoreText != null)
@@ -304,21 +260,25 @@ public class GameManager : MonoBehaviour
         var outline = berry.GetComponent<Outline>();
         if (outline != null)
         {
+
             outline.enabled = color != Color.clear;
             outline.effectColor = color;
-            outline.effectDistance = new Vector2(5f, -5f); // base thickness
+            outline.effectDistance = new Vector2(5f, -5f); // base thickness 
         }
     }
 
-    // ===== Effects =====
+
+    // Wiggle the entire group briefly
     IEnumerator WiggleGroup(List<Berry> berries, float duration, float scale, float angle)
     {
+        // start per-berry wiggles
         foreach (var b in berries)
             if (b != null) StartCoroutine(Wiggle(b.transform, duration, scale, angle));
 
         yield return new WaitForSeconds(duration);
     }
 
+    // Simple wiggle: oscillate rotation & scale, then restore
     IEnumerator Wiggle(Transform t, float duration, float scale, float angle)
     {
         if (t == null) yield break;
