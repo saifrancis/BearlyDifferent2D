@@ -45,7 +45,7 @@ public class FishManager : MonoBehaviour
         // Check win condition
         if (score >= targetScore)
         {
-            scoreText.text = "YOU WIN! Score: " + score;
+            scoreText.text = "YOU WIN!";
             CancelInvoke("SpawnLeaf");
             Invoke("GoToNextScene", 5f);
         }
@@ -55,7 +55,7 @@ public class FishManager : MonoBehaviour
 
     void UpdateScoreUI()
     {
-        scoreText.text = "Score: " + score;
+        scoreText.text = "Score:\n" + score;
     }
 
     void GoToNextScene()
