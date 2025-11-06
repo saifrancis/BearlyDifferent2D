@@ -158,11 +158,18 @@ MonoBehaviour:
   - {fileID: 1154746584}
   - {fileID: 1184791888}
   fadeDuration: 1
-  useZoomTransition: 1
-  zoomPanelIndex: 3
-  zoomDuration: 5
-  waitBeforeSceneLoad: 2
   nextSceneName: MiniGame_1
+  waitBeforeSceneLoad: 2
+  useChoiceOnLastPanel: 0
+  choice1Scene: MiniGame_2.1
+  choice2Scene: MiniGame_2.2
+  choice3Scene: MiniGame_2.3
+  useGrowOnLastPanel: 0
+  panelToDeactivateOnGrow: {fileID: 0}
+  growDuration: 1.75
+  growWaitAfter: 10
+  growTargetAnchoredPos: {x: 0, y: 0}
+  growTargetSize: {x: 252.1366, y: 356.5933}
   useGloveInput: 1
   togglePanel: {fileID: 1977794234}
   toggleKey: 104
@@ -2011,7 +2018,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1977794235
 RectTransform:
   m_ObjectHideFlags: 0
