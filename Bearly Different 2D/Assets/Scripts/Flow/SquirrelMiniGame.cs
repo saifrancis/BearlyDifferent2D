@@ -45,6 +45,13 @@ public class SquirrelMiniGame : MonoBehaviour
 
     private Coroutine successFlashRoutine;
 
+    public SpriteRenderer pipSprite;
+    public Sprite normalSprite;
+    public Sprite jumpFlashSprite;
+    public float flashDuration = 0.12f;
+
+    private Coroutine flashRoutine;
+
     private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
 
     // --------------- Unity ---------------
@@ -117,6 +124,7 @@ public class SquirrelMiniGame : MonoBehaviour
         // Apply jump
         playerRb.velocity = new Vector2(playerRb.velocity.x, 0f);
         playerRb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
+        TriggerJumpFlash();
 
         // Rhythm feedback
         if (interval < minJumpInterval)
@@ -198,5 +206,22 @@ public class SquirrelMiniGame : MonoBehaviour
         {
             yield return null;
         }
+    }
+
+    private void TriggerJumpFlash()
+    {
+        if (pipSprite == null || jumpFlashSprite == null) return;
+
+        if (flashRoutine != null)
+            StopCoroutine(flashRoutine);
+
+        flashRoutine = StartCoroutine(JumpFlashCo());
+    }
+
+    private IEnumerator JumpFlashCo()
+    {
+        pipSprite.sprite = jumpFlashSprite;
+        yield return new WaitForSeconds(flashDuration);
+        pipSprite.sprite = normalSprite;
     }
 }

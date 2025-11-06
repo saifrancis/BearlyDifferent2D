@@ -1,5 +1,5 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
+using System;
 using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.SceneManagement;
@@ -11,29 +11,48 @@ public class PanelManager : MonoBehaviour
     public float fadeDuration = 1f;
     private int currentIndex = -1;
 
-    [Header("Zoom Transition Settings")]
-    public bool useZoomTransition = true;
-    public int zoomPanelIndex = 3;
-    public float zoomDuration = 1f;
-    public float waitBeforeSceneLoad = 2f;
+    [Header("Scene Flow (Auto)")]
+    public string nextSceneName;            // Scene to load after last panel (when not in choice/grow modes)
+    public float waitBeforeSceneLoad = 2f;  // Delay before scene change (auto mode)
+    private bool isLoadingNextScene = false;
 
-    [Header("Scene Flow")]
-    public string nextSceneName;
+    [Header("Choice Mode (Last Panel)")]
+    [Tooltip("If enabled, when the last panel is shown the player must press 1, 2, or 3 to pick a scene.")]
+    public bool useChoiceOnLastPanel = false;
+    public string choice1Scene = "MiniGame_2.1";
+    public string choice2Scene = "MiniGame_2.2";
+    public string choice3Scene = "MiniGame_2.3";
+    private bool waitingForChoice = false;
 
-    private RectTransform zoomingPanel;
-    private Vector2 originalAnchorMin;
-    private Vector2 originalAnchorMax;
-    private Vector2 originalSizeDelta;
-    private Vector2 originalAnchoredPosition;
-    private bool isZoomedIn = false;
-    private bool zoomPanelReached = false;
+    [Header("Grow Mode (Last Panel)")]
+    [Tooltip("If enabled (and not using Choice Mode), when the last panel is shown all panels will smoothly grow/move to the target position/size, wait, then load the next scene.")]
+    public bool useGrowOnLastPanel = false;
+
+    [Tooltip("Optional panel to deactivate right when the grow animation starts.")]
+    public GameObject panelToDeactivateOnGrow;
+
+    [Tooltip("Seconds for the grow/move animation.")]
+    public float growDuration = 1.75f;
+
+    [Tooltip("Seconds to wait after the grow finishes before loading the scene.")]
+    public float growWaitAfter = 10f;
+
+    [Tooltip("Target anchored position for each panel's RectTransform.")]
+    public Vector2 growTargetAnchoredPos = Vector2.zero;
+
+    [Tooltip("Target sizeDelta (Width x Height) for each panel's RectTransform.")]
+    public Vector2 growTargetSize = new Vector2(252.1366f, 356.5933f);
+
+    [Header("Dialogue (per-panel, non-overlapping)")]
+    [Tooltip("Voice clip for each panel index (same order/length as 'panels'). Leave null for panels without audio.")]
+    public AudioClip[] panelVoiceClips;
+    [Range(0f, 1f)] public float voiceVolume = 1f;
+    [Tooltip("Optional: assign an existing AudioSource. If left empty, one will be added automatically.")]
+    public AudioSource voiceSource;
 
     [Header("Glove Control")]
     public bool useGloveInput = true;
-
     private UnifiedGloveController accRef;
-
-    private bool isChoiceScene = false;
 
     [Header("Toggle Panel (press key to show/hide)")]
     public GameObject togglePanel;
@@ -42,38 +61,56 @@ public class PanelManager : MonoBehaviour
     private bool togglePanelActive = false;
     private Coroutine toggleCoroutine;
 
-    void Start()
+    [Serializable]
+    public struct DeactivateAfterSteps
     {
-        string sceneName = SceneManager.GetActiveScene().name;
-        isChoiceScene = sceneName == "3Page_Three";
+        public GameObject obj;
+        public int steps;
+        [HideInInspector]
+        public int startIndex;
+    }
 
+    [Header("Selective Deactivate When Advancing")]
+    [Tooltip("Only panels in this list will be deactivated when you advance to the next one.")]
+    public GameObject[] deactivateOnAdvance;
+    public DeactivateAfterSteps[] deactivateAfterSteps;
+
+    public bool fadeOutOnDeactivate = true;
+    public float deactivateFadeDuration = 0.2f;
+
+
+
+    void Awake()
+    {
+        // Ensure all panels start hidden (alpha 0)
         foreach (GameObject panel in panels)
         {
-            if (panel.TryGetComponent(out CanvasGroup cg))
-                cg.alpha = 0f;
-            else
-                panel.AddComponent<CanvasGroup>().alpha = 0f;
+            if (panel == null) continue;
+            if (!panel.TryGetComponent(out CanvasGroup cg))
+                cg = panel.AddComponent<CanvasGroup>();
+            cg.alpha = 0f;
         }
 
+        // Default toggle panel (fallback to first panel if none assigned)
         if (togglePanel == null && panels != null && panels.Length > 0)
-        {
             togglePanel = panels[0];
-        }
 
         if (togglePanel != null)
             togglePanelActive = togglePanel.activeSelf;
 
-        if (useZoomTransition && zoomPanelIndex >= 0 && zoomPanelIndex < panels.Length)
-        {
-            zoomingPanel = panels[zoomPanelIndex].GetComponent<RectTransform>();
-            originalAnchorMin = zoomingPanel.anchorMin;
-            originalAnchorMax = zoomingPanel.anchorMax;
-            originalSizeDelta = zoomingPanel.sizeDelta;
-            originalAnchoredPosition = zoomingPanel.anchoredPosition;
-        }
-
         currentIndex = -1;
 
+        // Ensure voice source
+        if (voiceSource == null)
+        {
+            voiceSource = gameObject.AddComponent<AudioSource>();
+            voiceSource.playOnAwake = false;
+            voiceSource.loop = false;           // dialogue should not loop
+            voiceSource.spatialBlend = 0f;      // 2D
+            voiceSource.volume = voiceVolume;
+        }
+
+        // Optional glove input
         if (useGloveInput)
         {
             accRef = FindObjectOfType<UnifiedGloveController>();
@@ -81,38 +118,27 @@ public class PanelManager : MonoBehaviour
             {
                 accRef.OnPose += OnAccelPose;
                 accRef.OnChoice += OnAccelChoice;
-
-                // Map finger patterns to choices on the choice scene
-                accRef.OnChoice += n =>
-                {
-                    if (!isChoiceScene) return;
-                    if (!zoomPanelReached) return;
-                    if (isZoomedIn) return;
-
-                    if (n == 1) StartCoroutine(ZoomIn("MiniGame_2.1"));
-                    else if (n == 2) StartCoroutine(ZoomIn("MiniGame_2.2"));
-                    else if (n == 3) StartCoroutine(ZoomIn("MiniGame_2.3"));
-                };
             }
             else
             {
-                Debug.LogWarning("AccelerometerPos not found for PanelManager");
+                Debug.LogWarning("UnifiedGloveController not found for PanelManager");
             }
         }
-
-
     }
 
     void OnDestroy()
     {
         if (accRef != null)
+        {
             accRef.OnPose -= OnAccelPose;
-        accRef.OnChoice -= OnAccelChoice;
+            accRef.OnChoice -= OnAccelChoice;
+        }
     }
 
     private void OnAccelPose(string pose)
     {
-        if (!useGloveInput || isZoomedIn) return;
+        if (!useGloveInput) return;
+        if (waitingForChoice) return; // in choice mode, ignore RIGHT to prevent skipping
         if (pose == "RIGHT")
             ShowNextPanel();
     }
@@ -120,39 +146,31 @@ public class PanelManager : MonoBehaviour
     private void OnAccelChoice(int n)
     {
         if (!useGloveInput) return;
-        if (!isChoiceScene) return;
-        if (!zoomPanelReached) return;
-        if (isZoomedIn) return;
+        if (!waitingForChoice) return; // only accept choices at last panel when choice mode is on
 
-        if (n == 1) StartCoroutine(ZoomIn("MiniGame_2.1"));
-        else if (n == 2) StartCoroutine(ZoomIn("MiniGame_2.2"));
-        else if (n == 3) StartCoroutine(ZoomIn("MiniGame_2.3"));
+        if (n == 1) LoadSceneSafe(choice1Scene);
+        else if (n == 2) LoadSceneSafe(choice2Scene);
+        else if (n == 3) LoadSceneSafe(choice3Scene);
     }
-
 
     void Update()
     {
-        // Toggle panel with key
+        // Toggle a panel with key (no pause logic)
         if (Input.GetKeyDown(toggleKey))
-        {
             TogglePanel();
-        }
 
-        if (!isZoomedIn)
+        // If we're waiting for a choice on the last panel, read 1/2/3
+        if (waitingForChoice)
         {
-            if (Input.GetKeyDown(KeyCode.RightArrow))
-                ShowNextPanel();
-
-            if (isChoiceScene && zoomPanelReached)
-            {
-                if (Input.GetKeyDown(KeyCode.Alpha1))
-                    StartCoroutine(ZoomIn("MiniGame_2.1"));
-                else if (Input.GetKeyDown(KeyCode.Alpha2))
-                    StartCoroutine(ZoomIn("MiniGame_2.2"));
-                else if (Input.GetKeyDown(KeyCode.Alpha3))
-                    StartCoroutine(ZoomIn("MiniGame_2.3"));
-            }
+            if (Input.GetKeyDown(KeyCode.Alpha1)) LoadSceneSafe(choice1Scene);
+            else if (Input.GetKeyDown(KeyCode.Alpha2)) LoadSceneSafe(choice2Scene);
+            else if (Input.GetKeyDown(KeyCode.Alpha3)) LoadSceneSafe(choice3Scene);
+            return; // block advancing while awaiting choice
         }
+
+        // Keyboard advance between panels
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+            ShowNextPanel();
     }
 
     void TogglePanel()
@@ -198,25 +216,91 @@ public class PanelManager : MonoBehaviour
         }
     }
 
-    void ShowNextPanel()
+    public void ShowNextPanel()
     {
-        if (zoomPanelReached)
-        {
-            if (!isChoiceScene && useZoomTransition)
-                StartCoroutine(ZoomIn(nextSceneName));
-            return;
-        }
+        if (isLoadingNextScene) return; // prevent double triggers
+        if (waitingForChoice) return;   // already at last panel in choice mode
 
         if (currentIndex < panels.Length - 1)
         {
             currentIndex++;
             StartCoroutine(FadeInPanel(panels[currentIndex]));
-            CheckForTransition();
+
+            // 🔊 Play per-panel dialogue immediately (cuts previous)
+            PlayVoiceFor(currentIndex);
+
+            // If this is the last panel…
+            if (currentIndex == panels.Length - 1)
+            {
+                if (useChoiceOnLastPanel)
+                {
+                    waitingForChoice = true;
+                }
+                else if (useGrowOnLastPanel)
+                {
+                    StartCoroutine(GrowAllPanelsThenLoad());
+                }
+                else
+                {
+                    StartCoroutine(LoadNextSceneAfterDelay());
+                }
+            }
+
+            // Optional sample logic you had (enable/disable movers)
+            if (currentIndex > 0)
+            {
+                var oldMover = panels[currentIndex - 1].GetComponent<CharacterMover>();
+                if (oldMover) oldMover.isEnabled = false;
+            }
+
+            var newMover = panels[currentIndex].GetComponent<CharacterMover>();
+            if (newMover)
+            {
+                newMover.isEnabled = true;
+                newMover.StartMoving();
+            }
         }
+
+        if (currentIndex > 0)
+        {
+            CheckPanelsToDeactivate();
+            //var prev = panels[currentIndex - 1];
+            //if (ShouldDeactivate(prev))
+            //{
+            //    if (fadeOutOnDeactivate) StartCoroutine(FadeOutAndDeactivate(prev));
+            //    else prev.SetActive(false);
+            //}
+        }
+    }
+
+    // --- Dialogue control ---
+    private void PlayVoiceFor(int index)
+    {
+        if (voiceSource == null) return;
+
+        // Always cut previous
+        if (voiceSource.isPlaying) voiceSource.Stop();
+
+        // Guard: array length and null clips
+        if (panelVoiceClips == null || index < 0 || index >= panelVoiceClips.Length) return;
+        var clip = panelVoiceClips[index];
+        if (clip == null) return;
+
+        voiceSource.volume = voiceVolume;
+        voiceSource.clip = clip;
+        voiceSource.Play();
+    }
+
+    private void StopVoice()
+    {
+        if (voiceSource != null && voiceSource.isPlaying)
+            voiceSource.Stop();
     }
 
     IEnumerator FadeInPanel(GameObject panel)
     {
+        if (panel == null) yield break;
+
         CanvasGroup cg = panel.GetComponent<CanvasGroup>();
         if (cg == null) cg = panel.AddComponent<CanvasGroup>();
 
@@ -230,47 +314,131 @@ public class PanelManager : MonoBehaviour
         cg.alpha = 1f;
     }
 
-    void CheckForTransition()
+    IEnumerator LoadNextSceneAfterDelay()
     {
-        if (currentIndex == panels.Length - 1)
-        {
-            zoomPanelReached = true;
-            if (isChoiceScene) return;
-        }
+        isLoadingNextScene = true;
+
+        // Optional: stop any lingering voice before scene transition
+        StopVoice();
+
+        yield return new WaitForSeconds(waitBeforeSceneLoad);
+        LoadSceneSafe(nextSceneName);
     }
 
-    IEnumerator ZoomIn(string targetScene)
+    private void LoadSceneSafe(string sceneName)
     {
-        isZoomedIn = true;
+        if (string.IsNullOrEmpty(sceneName))
+        {
+            Debug.LogWarning("PanelManager: scene name is empty; no scene loaded.");
+            return;
+        }
 
-        Vector2 startMin = zoomingPanel.anchorMin;
-        Vector2 startMax = zoomingPanel.anchorMax;
-        Vector2 startPos = zoomingPanel.anchoredPosition;
-        Vector2 startSize = zoomingPanel.sizeDelta;
+        isLoadingNextScene = true;
+        waitingForChoice = false;
 
-        Vector2 targetMin = Vector2.zero;
-        Vector2 targetMax = Vector2.one;
-        Vector2 targetPos = Vector2.zero;
-        Vector2 targetSize = Vector2.zero;
+        // Optional: stop voice on scene change
+        StopVoice();
 
+        SceneManager.LoadScene(sceneName);
+    }
+
+    // --- Grow animation keeps cutting/locking voice too ---
+    private IEnumerator GrowAllPanelsThenLoad()
+    {
+        if (isLoadingNextScene) yield break;
+        isLoadingNextScene = true; // lock flow
+
+        // Stop voice before long animation (prevents overlap with next scene)
+        StopVoice();
+
+        if (panelToDeactivateOnGrow != null)
+            panelToDeactivateOnGrow.SetActive(false);
+
+        // Cache initial RT data
+        var rts = new RectTransform[panels.Length];
+        var startPos = new Vector2[panels.Length];
+        var startSize = new Vector2[panels.Length];
+
+        for (int i = 0; i < panels.Length; i++)
+        {
+            if (panels[i] == null) continue;
+            var rt = panels[i].GetComponent<RectTransform>();
+            if (rt == null)
+            {
+                Debug.LogWarning($"PanelManager: Panel '{panels[i].name}' has no RectTransform.");
+                continue;
+            }
+            rts[i] = rt;
+            startPos[i] = rt.anchoredPosition;
+            startSize[i] = rt.sizeDelta;
+        }
+
+        // Animate all panels towards the target
         float elapsed = 0f;
-        while (elapsed < zoomDuration)
+        while (elapsed < growDuration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / zoomDuration;
+            float t = Mathf.Clamp01(elapsed / growDuration);
 
-            zoomingPanel.anchorMin = Vector2.Lerp(startMin, targetMin, t);
-            zoomingPanel.anchorMax = Vector2.Lerp(startMax, targetMax, t);
-            zoomingPanel.anchoredPosition = Vector2.Lerp(startPos, targetPos, t);
-            zoomingPanel.sizeDelta = Vector2.Lerp(startSize, targetSize, t);
+            for (int i = 0; i < rts.Length; i++)
+            {
+                if (rts[i] == null) continue;
+                rts[i].anchoredPosition = Vector2.Lerp(startPos[i], growTargetAnchoredPos, t);
+                rts[i].sizeDelta = Vector2.Lerp(startSize[i], growTargetSize, t);
+            }
 
             yield return null;
         }
 
-        yield return new WaitForSeconds(waitBeforeSceneLoad);
+        // Snap to final
+        for (int i = 0; i < rts.Length; i++)
+        {
+            if (rts[i] == null) continue;
+            rts[i].anchoredPosition = growTargetAnchoredPos;
+            rts[i].sizeDelta = growTargetSize;
+        }
 
-        if (!string.IsNullOrEmpty(targetScene))
-            SceneManager.LoadScene(targetScene);
+        // Wait, then load
+        yield return new WaitForSeconds(growWaitAfter);
+        LoadSceneSafe(nextSceneName);
+    }
+
+    void CheckPanelsToDeactivate()
+    {
+        foreach(DeactivateAfterSteps item in deactivateAfterSteps)
+        {
+            GameObject obj = item.obj;
+            if (obj != null)
+                if (obj.activeInHierarchy)
+                {
+                    if (currentIndex - item.startIndex >= item.steps)
+                        if (fadeOutOnDeactivate) StartCoroutine(FadeOutAndDeactivate(obj));
+                        else obj.SetActive(false);
+                }
+        }
+    }
+    bool ShouldDeactivate(GameObject panel)
+    {
+        if (panel == null || deactivateOnAdvance == null) return false;
+        return Array.IndexOf(deactivateOnAdvance, panel) >= 0;
+    }
+
+    IEnumerator FadeOutAndDeactivate(GameObject panel)
+    {
+        if (panel == null) yield break;
+
+        var cg = panel.GetComponent<CanvasGroup>();
+        if (cg == null) cg = panel.AddComponent<CanvasGroup>();
+
+        float start = cg.alpha;
+        float t = 0f;
+        while (t < deactivateFadeDuration)
+        {
+            t += Time.deltaTime;
+            cg.alpha = Mathf.Lerp(start, 0f, deactivateFadeDuration <= 0f ? 1f : (t / deactivateFadeDuration));
+            yield return null;
+        }
+        cg.alpha = 0f;
+        panel.SetActive(false);
     }
 }
-
