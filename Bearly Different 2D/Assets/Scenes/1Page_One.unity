@@ -315,6 +315,10 @@ MonoBehaviour:
   togglePanel: {fileID: 805929742}
   toggleKey: 104
   toggleFadeDuration: 0.2
+  deactivateOnAdvance: []
+  deactivateAfterSteps: []
+  fadeOutOnDeactivate: 1
+  deactivateFadeDuration: 0.2
 --- !u!4 &141095989
 Transform:
   m_ObjectHideFlags: 0
