@@ -205,6 +205,24 @@ public class PanelManager : MonoBehaviour
                     StartCoroutine(LoadNextSceneAfterDelay());
                 }
             }
+
+
+            // ✅ Disable character movement on previous panel
+            if (currentIndex > 0)
+            {
+                var oldMover = panels[currentIndex - 1].GetComponent<CharacterMover>();
+                if (oldMover) oldMover.isEnabled = false;
+            }
+
+            // ✅ Enable character movement on this panel (if it has one)
+            var newMover = panels[currentIndex].GetComponent<CharacterMover>();
+            if (newMover)
+            {
+                newMover.isEnabled = true;
+                newMover.StartMoving();
+            }
+
+
         }
     }
 
