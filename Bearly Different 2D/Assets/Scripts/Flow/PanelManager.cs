@@ -43,6 +43,13 @@ public class PanelManager : MonoBehaviour
     [Tooltip("Target sizeDelta (Width x Height) for each panel's RectTransform.")]
     public Vector2 growTargetSize = new Vector2(252.1366f, 356.5933f);
 
+    [Header("Dialogue (per-panel, non-overlapping)")]
+    [Tooltip("Voice clip for each panel index (same order/length as 'panels'). Leave null for panels without audio.")]
+    public AudioClip[] panelVoiceClips;
+    [Range(0f, 1f)] public float voiceVolume = 1f;
+    [Tooltip("Optional: assign an existing AudioSource. If left empty, one will be added automatically.")]
+    public AudioSource voiceSource;
+
     [Header("Glove Control")]
     public bool useGloveInput = true;
     private UnifiedGloveController accRef;
@@ -92,6 +99,16 @@ public class PanelManager : MonoBehaviour
             togglePanelActive = togglePanel.activeSelf;
 
         currentIndex = -1;
+
+        // Ensure voice source
+        if (voiceSource == null)
+        {
+            voiceSource = gameObject.AddComponent<AudioSource>();
+            voiceSource.playOnAwake = false;
+            voiceSource.loop = false;           // dialogue should not loop
+            voiceSource.spatialBlend = 0f;      // 2D
+            voiceSource.volume = voiceVolume;
+        }
 
         // Optional glove input
         if (useGloveInput)
@@ -209,6 +226,9 @@ public class PanelManager : MonoBehaviour
             currentIndex++;
             StartCoroutine(FadeInPanel(panels[currentIndex]));
 
+            // 🔊 Play per-panel dialogue immediately (cuts previous)
+            PlayVoiceFor(currentIndex);
+
             // If this is the last panel…
             if (currentIndex == panels.Length - 1)
             {
@@ -226,23 +246,19 @@ public class PanelManager : MonoBehaviour
                 }
             }
 
-
-            // ✅ Disable character movement on previous panel
+            // Optional sample logic you had (enable/disable movers)
             if (currentIndex > 0)
             {
                 var oldMover = panels[currentIndex - 1].GetComponent<CharacterMover>();
                 if (oldMover) oldMover.isEnabled = false;
             }
 
-            // ✅ Enable character movement on this panel (if it has one)
             var newMover = panels[currentIndex].GetComponent<CharacterMover>();
             if (newMover)
             {
                 newMover.isEnabled = true;
                 newMover.StartMoving();
             }
-
-
         }
 
         if (currentIndex > 0)
@@ -255,6 +271,30 @@ public class PanelManager : MonoBehaviour
             //    else prev.SetActive(false);
             //}
         }
+    }
+
+    // --- Dialogue control ---
+    private void PlayVoiceFor(int index)
+    {
+        if (voiceSource == null) return;
+
+        // Always cut previous
+        if (voiceSource.isPlaying) voiceSource.Stop();
+
+        // Guard: array length and null clips
+        if (panelVoiceClips == null || index < 0 || index >= panelVoiceClips.Length) return;
+        var clip = panelVoiceClips[index];
+        if (clip == null) return;
+
+        voiceSource.volume = voiceVolume;
+        voiceSource.clip = clip;
+        voiceSource.Play();
+    }
+
+    private void StopVoice()
+    {
+        if (voiceSource != null && voiceSource.isPlaying)
+            voiceSource.Stop();
     }
 
     IEnumerator FadeInPanel(GameObject panel)
@@ -277,6 +317,10 @@ public class PanelManager : MonoBehaviour
     IEnumerator LoadNextSceneAfterDelay()
     {
         isLoadingNextScene = true;
+
+        // Optional: stop any lingering voice before scene transition
+        StopVoice();
+
         yield return new WaitForSeconds(waitBeforeSceneLoad);
         LoadSceneSafe(nextSceneName);
     }
@@ -292,16 +336,21 @@ public class PanelManager : MonoBehaviour
         isLoadingNextScene = true;
         waitingForChoice = false;
 
+        // Optional: stop voice on scene change
+        StopVoice();
+
         SceneManager.LoadScene(sceneName);
     }
 
-    // --- New grow coroutine ---
+    // --- Grow animation keeps cutting/locking voice too ---
     private IEnumerator GrowAllPanelsThenLoad()
     {
         if (isLoadingNextScene) yield break;
-        isLoadingNextScene = true; // lock flow while we animate
+        isLoadingNextScene = true; // lock flow
 
-        // 🔹 NEW LINE: deactivate a specific panel if assigned
+        // Stop voice before long animation (prevents overlap with next scene)
+        StopVoice();
+
         if (panelToDeactivateOnGrow != null)
             panelToDeactivateOnGrow.SetActive(false);
 
@@ -313,14 +362,12 @@ public class PanelManager : MonoBehaviour
         for (int i = 0; i < panels.Length; i++)
         {
             if (panels[i] == null) continue;
-
             var rt = panels[i].GetComponent<RectTransform>();
             if (rt == null)
             {
                 Debug.LogWarning($"PanelManager: Panel '{panels[i].name}' has no RectTransform.");
                 continue;
             }
-
             rts[i] = rt;
             startPos[i] = rt.anchoredPosition;
             startSize[i] = rt.sizeDelta;
@@ -336,7 +383,6 @@ public class PanelManager : MonoBehaviour
             for (int i = 0; i < rts.Length; i++)
             {
                 if (rts[i] == null) continue;
-
                 rts[i].anchoredPosition = Vector2.Lerp(startPos[i], growTargetAnchoredPos, t);
                 rts[i].sizeDelta = Vector2.Lerp(startSize[i], growTargetSize, t);
             }
