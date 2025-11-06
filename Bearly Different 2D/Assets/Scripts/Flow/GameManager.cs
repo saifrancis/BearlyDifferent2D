@@ -36,6 +36,11 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject helpPanel;     // assign in Inspector
     [SerializeField] private bool helpStartsVisible = false;
 
+    [Header("Grid Panel")]
+    [SerializeField] private GameObject gridPanel;     // assign in Inspector
+
+    public WinText wt;
+
     void Start()
     {
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
@@ -138,6 +143,8 @@ public class GameManager : MonoBehaviour
 
             if (successfulMatches >= matchesNeeded)
             {
+                gridPanel.SetActive(false); 
+                wt.PlayWin();
                 levelComplete = true;
                 yield return new WaitForSeconds(0.5f);
                 StartCoroutine(LoadNextSceneAfterDelay(5f));
