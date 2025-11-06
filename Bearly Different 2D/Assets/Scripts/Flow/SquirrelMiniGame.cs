@@ -54,6 +54,8 @@ public class SquirrelMiniGame : MonoBehaviour
 
     private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
 
+    public WinText wt; 
+
     // --------------- Unity ---------------
     void Start()
     {
@@ -176,6 +178,8 @@ public class SquirrelMiniGame : MonoBehaviour
         beehiveRb.transform.SetParent(null);
         beehiveRb.bodyType = RigidbodyType2D.Dynamic;
         if (hiveSprite) hiveSprite.sprite = hiveFallSprite;
+
+        wt.PlayWin();
 
         StartCoroutine(GoToNextScene());
     }

@@ -558,11 +558,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3417765344748054332, guid: ee9c93c65b1948d45a1a254b26cf997e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 960
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3417765344748054332, guid: ee9c93c65b1948d45a1a254b26cf997e, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 540
+      value: -1.25
       objectReference: {fileID: 0}
     - target: {fileID: 3417765344748054332, guid: ee9c93c65b1948d45a1a254b26cf997e, type: 3}
       propertyPath: m_LocalPosition.z
@@ -935,7 +935,7 @@ Canvas:
   m_Enabled: 1
   serializedVersion: 3
   m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_Camera: {fileID: 1432192097}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -1162,6 +1162,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 5669330382645122066, guid: ce1b251e74e3f58448a7aa36ccc4fada, type: 3}
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 1432192097}
+    - target: {fileID: 5669330382645122066, guid: ce1b251e74e3f58448a7aa36ccc4fada, type: 3}
+      propertyPath: m_RenderMode
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5669330382645122070, guid: ce1b251e74e3f58448a7aa36ccc4fada, type: 3}
       propertyPath: m_Name
       value: WinText Canvas
@@ -2082,6 +2090,7 @@ MonoBehaviour:
   helpPanel: {fileID: 1617266518}
   helpStartsVisible: 1
   wt: {fileID: 1887398464}
+  bo: {fileID: 1504303061}
 --- !u!4 &1785460777
 Transform:
   m_ObjectHideFlags: 0
