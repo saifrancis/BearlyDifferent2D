@@ -42,6 +42,10 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
     private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
 
+    public WinText wt;
+
+    public GameObject bo; 
+
     void Start()
     {
         // Setup beehive
@@ -116,6 +120,9 @@ public class BeehiveMiniGame1 : MonoBehaviour
         isFalling = true;
         beehiveRb.bodyType = RigidbodyType2D.Dynamic;
         beehiveRb.gravityScale = fallGravityScale;
+
+        bo.SetActive(false); 
+        wt.PlayWin(); 
 
         StartCoroutine(LoadNextSceneAfterDelay());
     }
