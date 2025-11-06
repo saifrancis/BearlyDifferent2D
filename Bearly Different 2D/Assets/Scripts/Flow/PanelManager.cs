@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System;
 using UnityEngine.UI;
 using System.Collections;
 using UnityEngine.SceneManagement;
@@ -60,7 +61,26 @@ public class PanelManager : MonoBehaviour
     private bool togglePanelActive = false;
     private Coroutine toggleCoroutine;
 
-    void Start()
+    [Serializable]
+    public struct DeactivateAfterSteps
+    {
+        public GameObject obj;
+        public int steps;
+        [HideInInspector]
+        public int startIndex;
+    }
+
+    [Header("Selective Deactivate When Advancing")]
+    [Tooltip("Only panels in this list will be deactivated when you advance to the next one.")]
+    public GameObject[] deactivateOnAdvance;
+    public DeactivateAfterSteps[] deactivateAfterSteps;
+
+    public bool fadeOutOnDeactivate = true;
+    public float deactivateFadeDuration = 0.2f;
+
+
+
+    void Awake()
     {
         // Ensure all panels start hidden (alpha 0)
         foreach (GameObject panel in panels)
@@ -196,7 +216,7 @@ public class PanelManager : MonoBehaviour
         }
     }
 
-    void ShowNextPanel()
+    public void ShowNextPanel()
     {
         if (isLoadingNextScene) return; // prevent double triggers
         if (waitingForChoice) return;   // already at last panel in choice mode
@@ -239,6 +259,17 @@ public class PanelManager : MonoBehaviour
                 newMover.isEnabled = true;
                 newMover.StartMoving();
             }
+        }
+
+        if (currentIndex > 0)
+        {
+            CheckPanelsToDeactivate();
+            //var prev = panels[currentIndex - 1];
+            //if (ShouldDeactivate(prev))
+            //{
+            //    if (fadeOutOnDeactivate) StartCoroutine(FadeOutAndDeactivate(prev));
+            //    else prev.SetActive(false);
+            //}
         }
     }
 
@@ -370,5 +401,44 @@ public class PanelManager : MonoBehaviour
         // Wait, then load
         yield return new WaitForSeconds(growWaitAfter);
         LoadSceneSafe(nextSceneName);
+    }
+
+    void CheckPanelsToDeactivate()
+    {
+        foreach(DeactivateAfterSteps item in deactivateAfterSteps)
+        {
+            GameObject obj = item.obj;
+            if (obj != null)
+                if (obj.activeInHierarchy)
+                {
+                    if (currentIndex - item.startIndex >= item.steps)
+                        if (fadeOutOnDeactivate) StartCoroutine(FadeOutAndDeactivate(obj));
+                        else obj.SetActive(false);
+                }
+        }
+    }
+    bool ShouldDeactivate(GameObject panel)
+    {
+        if (panel == null || deactivateOnAdvance == null) return false;
+        return Array.IndexOf(deactivateOnAdvance, panel) >= 0;
+    }
+
+    IEnumerator FadeOutAndDeactivate(GameObject panel)
+    {
+        if (panel == null) yield break;
+
+        var cg = panel.GetComponent<CanvasGroup>();
+        if (cg == null) cg = panel.AddComponent<CanvasGroup>();
+
+        float start = cg.alpha;
+        float t = 0f;
+        while (t < deactivateFadeDuration)
+        {
+            t += Time.deltaTime;
+            cg.alpha = Mathf.Lerp(start, 0f, deactivateFadeDuration <= 0f ? 1f : (t / deactivateFadeDuration));
+            yield return null;
+        }
+        cg.alpha = 0f;
+        panel.SetActive(false);
     }
 }

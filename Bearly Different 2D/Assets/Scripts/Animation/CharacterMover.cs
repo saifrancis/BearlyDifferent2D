@@ -5,6 +5,7 @@ using UnityEngine.Events;
 
 public class CharacterMover : MonoBehaviour
 {
+    public bool moving;
     [Header("Path")]
     public Transform[] points;
 
@@ -30,9 +31,16 @@ public class CharacterMover : MonoBehaviour
     bool _running;
 
     public SpriteRenderer sr;
-    public UnityEngine.UI.Image image;  
+    public UnityEngine.UI.Image image;
+
+    public bool playNextStart;
+    public bool playNextEnd;
+    public PanelManager panelManager;
     void Start()
     {
+
+        if (!moving) return;
+
         if (points == null || points.Length < 2)
         {
             Debug.LogWarning($"{nameof(CharacterMover)} needs at least 2 points.", this);
@@ -44,10 +52,13 @@ public class CharacterMover : MonoBehaviour
         transform.position = points[0].position;
 
         if (playOnStart) StartMoving();
+
     }
 
     public void StartMoving()
     {
+        if (playNextStart) panelManager.ShowNextPanel();
+        if (!moving) return;
         if (_running) return;
         _running = true;
         StopAllCoroutines();
@@ -107,6 +118,8 @@ public class CharacterMover : MonoBehaviour
                 transform.position = Vector3.LerpUnclamped(a, b, k);
                 yield return null;
             }
+
+            if (playNextEnd) panelManager.ShowNextPanel();
 
             // Arrived at next point
             _i = next;
