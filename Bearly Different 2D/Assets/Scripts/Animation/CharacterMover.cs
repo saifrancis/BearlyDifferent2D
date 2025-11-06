@@ -18,6 +18,10 @@ public class CharacterMover : MonoBehaviour
     [Header("Start/Stop")]
     public bool playOnStart = true;
 
+    [Header("Enable Toggle")]
+    public bool isEnabled = true;
+
+
     [Header("Events")]
     public UnityEvent onPathComplete;
 
@@ -25,6 +29,8 @@ public class CharacterMover : MonoBehaviour
     int _i = 0;            // current target index
     bool _running;
 
+    public SpriteRenderer sr;
+    public UnityEngine.UI.Image image;  
     void Start()
     {
         if (points == null || points.Length < 2)
@@ -58,6 +64,11 @@ public class CharacterMover : MonoBehaviour
     {
         while (true)
         {
+            while (!isEnabled)
+            {
+                yield return null; // pause movement but don't break coroutine
+            }
+
             int next = _i + _dir;
 
             // Handle end-of-path logic
@@ -89,6 +100,7 @@ public class CharacterMover : MonoBehaviour
             float t = 0f;
             while (t < 1f)
             {
+                image.sprite = sr.sprite; 
                 float duration = Mathf.Max(0.0001f, dist / speed);
                 t += Time.deltaTime / duration;
                 float k = ease.Evaluate(Mathf.Clamp01(t)); // apply easing to 0..1

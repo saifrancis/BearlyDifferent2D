@@ -42,6 +42,7 @@ public class PanelManager : MonoBehaviour
     private bool togglePanelActive = false;
     private Coroutine toggleCoroutine;
 
+
     void Start()
     {
         string sceneName = SceneManager.GetActiveScene().name;
@@ -210,7 +211,24 @@ public class PanelManager : MonoBehaviour
         if (currentIndex < panels.Length - 1)
         {
             currentIndex++;
+
             StartCoroutine(FadeInPanel(panels[currentIndex]));
+
+            // ✅ Disable character movement on previous panel
+            if (currentIndex > 0)
+            {
+                var oldMover = panels[currentIndex - 1].GetComponent<CharacterMover>();
+                if (oldMover) oldMover.isEnabled = false;
+            }
+
+            // ✅ Enable character movement on this panel (if it has one)
+            var newMover = panels[currentIndex].GetComponent<CharacterMover>();
+            if (newMover)
+            {
+                newMover.isEnabled = true;
+                newMover.StartMoving();
+            }
+
             CheckForTransition();
         }
     }
