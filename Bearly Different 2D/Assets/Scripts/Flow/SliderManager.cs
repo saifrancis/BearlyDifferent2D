@@ -32,6 +32,17 @@ public class SliderManager : MonoBehaviour
     private readonly int[] targetLayout = new int[] { 3, 0, 2, 6, 1, 4, 8, 7, 5 };
 
     // ---------- Unity ----------
+
+    public UnityEngine.UI.Image BGSprite;
+    public Sprite ColourSprite;
+
+    [Header("Solve VFX")]
+    [SerializeField] private ParticleSystem solveVFXPrefab; // assign a prefab in Inspector
+    [SerializeField] private float vfxScaleMultiplier = 1.1f; // ring size vs puzzle
+    [SerializeField] private string vfxSortingLayer = "Effects";
+    [SerializeField] private int vfxSortingOrder = 50;
+
+
     void Start()
     {
         pieces = new List<Transform>();
@@ -259,6 +270,9 @@ public class SliderManager : MonoBehaviour
 
     private IEnumerator GoToNextScene()
     {
+        BGSprite.sprite = ColourSprite;
+        PlaySolveVFX();
+
         yield return new WaitForSeconds(5f);
         SceneManager.LoadScene("6Page_Six");
     }
@@ -310,5 +324,64 @@ public class SliderManager : MonoBehaviour
         {
             if (messageText != null) StartCoroutine(ShowMessage("Piece can't be moved", 2f));
         }
+    }
+
+    private Bounds CalculatePuzzleBounds()
+    {
+        // Find world-space bounds of all visible tiles
+        var bounds = new Bounds(gameTransform.position, Vector3.zero);
+        bool hasAny = false;
+
+        for (int i = 0; i < pieces.Count; i++)
+        {
+            var go = pieces[i].gameObject;
+            if (!go.activeInHierarchy) continue; // skip the hidden blank
+            var r = go.GetComponent<Renderer>();
+            if (r == null) continue;
+
+            if (!hasAny) { bounds = r.bounds; hasAny = true; }
+            else bounds.Encapsulate(r.bounds);
+        }
+
+        if (!hasAny) bounds = new Bounds(gameTransform.position, Vector3.one * 2f); // fallback around board
+        return bounds;
+    }
+
+    private void PlaySolveVFX()
+    {
+        if (!solveVFXPrefab) return;
+
+        var b = CalculatePuzzleBounds();
+        var ps = Instantiate(solveVFXPrefab, b.center, Quaternion.identity);
+
+        // Try to size the effect to ring the puzzle
+        float radius = Mathf.Max(b.extents.x, b.extents.y) * vfxScaleMultiplier;
+        // If your prefab uses ParticleSystem shape, we can adjust it:
+        var shape = ps.shape;
+        shape.enabled = true;
+        if (shape.shapeType == ParticleSystemShapeType.Circle ||
+            shape.shapeType == ParticleSystemShapeType.Donut)
+        {
+            shape.radius = radius;
+        }
+        else
+        {
+            // Fallback: scale transform (works if prefab is authored to scale)
+            ps.transform.localScale = Vector3.one * (radius * 1.0f);
+        }
+
+        // Ensure it renders above the board in 2D
+        var r = ps.GetComponent<Renderer>();
+        if (r)
+        {
+            r.sortingLayerName = vfxSortingLayer;
+            r.sortingOrder = vfxSortingOrder;
+        }
+
+        // Auto-destroy when finished
+        var main = ps.main;
+        main.stopAction = ParticleSystemStopAction.Destroy;
+
+        ps.Play();
     }
 }
