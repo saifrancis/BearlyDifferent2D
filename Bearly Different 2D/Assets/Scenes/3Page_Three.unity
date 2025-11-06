@@ -729,11 +729,12 @@ MonoBehaviour:
   - {fileID: 1659176762}
   - {fileID: 270199972}
   fadeDuration: 1
-  useZoomTransition: 1
-  zoomPanelIndex: 5
-  zoomDuration: 5
-  waitBeforeSceneLoad: 2
   nextSceneName: MiniGame_2.1
+  waitBeforeSceneLoad: 2
+  useChoiceOnLastPanel: 1
+  choice1Scene: MiniGame_2.1
+  choice2Scene: MiniGame_2.2
+  choice3Scene: MiniGame_2.3
   useGloveInput: 1
   togglePanel: {fileID: 1968741944}
   toggleKey: 104
