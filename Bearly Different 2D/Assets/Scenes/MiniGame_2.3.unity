@@ -186,6 +186,7 @@ MonoBehaviour:
   winText: Bo reached the beehive!
   wt: {fileID: 1528484940}
   rockFadeTime: 1
+  scoreFeedback: {fileID: 1342498910}
 --- !u!212 &69062777
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1739,6 +1740,7 @@ GameObject:
   - component: {fileID: 1342498907}
   - component: {fileID: 1342498909}
   - component: {fileID: 1342498908}
+  - component: {fileID: 1342498910}
   m_Layer: 5
   m_Name: MessageTxt
   m_TagString: Untagged
@@ -1863,6 +1865,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1342498906}
   m_CullTransparentMesh: 1
+--- !u!114 &1342498910
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342498906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f52c0ea35a47b924187a19504caddab9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  popScale: 1.2
+  duration: 0.2
+  flashColor: {r: 1, g: 0.9, b: 0.3, a: 1}
+  playOnEnable: 0
 --- !u!1 &1510529330
 GameObject:
   m_ObjectHideFlags: 0

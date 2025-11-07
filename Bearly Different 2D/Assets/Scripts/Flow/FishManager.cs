@@ -21,7 +21,8 @@ public class FishManager : MonoBehaviour
     private int score = 0;
     private int targetScore = 5; // Number of leaves needed to win
 
-    public WinText wt; 
+    public WinText wt;
+    public ScoreTextFeedback scoreFeedback;
 
     private void Awake()
     {
@@ -74,6 +75,9 @@ public class FishManager : MonoBehaviour
         score++;
         if (leaf != null) Destroy(leaf.gameObject);
         UpdateScoreUI();
+
+        if (scoreFeedback != null)
+            scoreFeedback.Play();
 
         // Check win condition
         if (score >= targetScore)

@@ -40,6 +40,8 @@ public class BeehiveMiniGame1 : MonoBehaviour
     [SerializeField] private GameObject helpPanel;       // Assign a full-screen UI Panel under your Canvas
     [SerializeField] private bool helpStartsVisible = true;
 
+    public ScoreTextFeedback scoreFeedback;
+
     private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
 
     public WinText wt;
@@ -141,6 +143,9 @@ public class BeehiveMiniGame1 : MonoBehaviour
     {
         if (hitsText != null)
             hitsText.text = $"Hits: {hitCount} / {requiredHits}";
+
+        if (scoreFeedback != null)
+            scoreFeedback.Play();
     }
 
     // Called by glove “fist” action

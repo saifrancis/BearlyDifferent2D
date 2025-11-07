@@ -26,13 +26,6 @@ public class WinText : MonoBehaviour
     public bool emitLeaves = true;
     public int emitCountOverride = -1;
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            PlayWin();
-        }
-    }
 
     public void PlayWin()
     {

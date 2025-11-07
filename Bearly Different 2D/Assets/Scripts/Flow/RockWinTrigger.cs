@@ -20,6 +20,8 @@ public class RockWinTrigger : MonoBehaviour
     [Header("Rock Vanish (simple)")]
     public float rockFadeTime = 0.25f; // quarter-second fade
 
+    public ScoreTextFeedback scoreFeedback;
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (gameWon) return;
@@ -45,6 +47,8 @@ public class RockWinTrigger : MonoBehaviour
             {
                 winMessage.text = winText;
                 winMessage.gameObject.SetActive(true);
+                if (scoreFeedback != null)
+                    scoreFeedback.Play();
             }
 
             wt.PlayWin();   

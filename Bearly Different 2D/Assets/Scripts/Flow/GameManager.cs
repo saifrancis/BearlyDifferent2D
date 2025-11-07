@@ -40,6 +40,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject gridPanel;     // assign in Inspector
 
     public WinText wt;
+    public ScoreTextFeedback scoreFeedback;
 
     void Start()
     {
@@ -140,6 +141,8 @@ public class GameManager : MonoBehaviour
 
             successfulMatches += groups.Count;
             UpdateScoreUI();
+            if (scoreFeedback != null)
+                scoreFeedback.Play();
 
             if (successfulMatches >= matchesNeeded)
             {
