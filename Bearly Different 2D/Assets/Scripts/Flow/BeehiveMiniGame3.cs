@@ -13,6 +13,7 @@ public class BeehiveMiniGame3 : MonoBehaviour
     [SerializeField] private GameObject helpPanel;      // Assign your help panel in the Inspector
     [SerializeField] private bool helpStartsVisible = true;
 
+
     private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
 
     void Start()
@@ -29,6 +30,8 @@ public class BeehiveMiniGame3 : MonoBehaviour
         {
             ToggleHelpPanel();
         }
+
+        if (helpPanel.activeInHierarchy == true) return;
 
         // --- Gameplay logic ---
         if (canSpawn && Input.GetKeyDown(KeyCode.Space))

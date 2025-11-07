@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: 157803ea1a8e5a842a96250391884525
+guid: 3c91f0c479ff71d43b19ed36f0bc2ffc
 TextureImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -105,13 +105,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: pg5_Bo1_0
+      name: bo 2_0
       rect:
         serializedVersion: 2
-        x: 213
-        y: 114
-        width: 388
-        height: 523
+        x: 31
+        y: 126
+        width: 559
+        height: 512
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -119,8 +119,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: 0
       bones: []
-      spriteID: 6a2f3ab5d879f73499ca61b827b0fc10
-      internalID: 1920835188
+      spriteID: 9a7655641887e15449bb8cdb960700a7
+      internalID: 1303455161
       vertices: []
       indices: 
       edges: []
@@ -136,7 +136,7 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      pg5_Bo1_0: 1920835188
+      bo 2_0: 1303455161
   spritePackingTag: 
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0

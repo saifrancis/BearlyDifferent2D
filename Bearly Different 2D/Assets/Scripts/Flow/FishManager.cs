@@ -21,6 +21,12 @@ public class FishManager : MonoBehaviour
     private int score = 0;
     private int targetScore = 5; // Number of leaves needed to win
 
+    public WinText wt;
+    public ScoreTextFeedback scoreFeedback;
+
+    [Header("Catch FX")]
+    public ParticleSystem catchFXPrefab;
+
     private void Awake()
     {
         Instance = this;
@@ -33,10 +39,14 @@ public class FishManager : MonoBehaviour
 
         // Init help panel (no pause)
         if (helpPanel != null)
+        {
             helpPanel.SetActive(helpStartsVisible);
+            Time.timeScale = 0f;
+        }
 
         // Start spawning leaves
         InvokeRepeating(nameof(SpawnLeaf), 1f, spawnInterval);
+
     }
 
     void Update()
@@ -52,6 +62,11 @@ public class FishManager : MonoBehaviour
     {
         if (helpPanel == null) return;
         helpPanel.SetActive(!helpPanel.activeSelf);
+
+        if (helpPanel.activeInHierarchy)
+            Time.timeScale = 0f;
+        else
+            Time.timeScale = 1f;
     }
 
     void SpawnLeaf()
@@ -70,13 +85,32 @@ public class FishManager : MonoBehaviour
     public void CaughtLeaf(Leaf leaf)
     {
         score++;
+
+        if (leaf != null)
+        {
+            if (catchFXPrefab != null)
+            {
+                ParticleSystem fx = Instantiate(catchFXPrefab, leaf.transform.position, Quaternion.identity);
+                fx.Play();
+                Destroy(fx.gameObject, fx.main.duration + fx.main.startLifetime.constantMax + 0.2f);
+            }
+
+            Destroy(leaf.gameObject);
+        }
+
         if (leaf != null) Destroy(leaf.gameObject);
         UpdateScoreUI();
+
+        if (scoreFeedback != null)
+            scoreFeedback.Play();
 
         // Check win condition
         if (score >= targetScore)
         {
             scoreText.text = "YOU WIN!";
+
+            wt.PlayWin(); 
+
             CancelInvoke(nameof(SpawnLeaf));
             Invoke(nameof(GoToNextScene), 5f);
         }

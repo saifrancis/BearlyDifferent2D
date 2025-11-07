@@ -40,7 +40,15 @@ public class BeehiveMiniGame1 : MonoBehaviour
     [SerializeField] private GameObject helpPanel;       // Assign a full-screen UI Panel under your Canvas
     [SerializeField] private bool helpStartsVisible = true;
 
+    public ScoreTextFeedback scoreFeedback;
+
+    public GameObject doneGO; 
+
     private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
+
+    public WinText wt;
+
+    public GameObject bo; 
 
     void Start()
     {
@@ -66,6 +74,8 @@ public class BeehiveMiniGame1 : MonoBehaviour
         {
             ToggleHelpPanel();
         }
+
+        if (helpPanel.activeInHierarchy == true) return;
 
         // --- Normal gameplay ---
         if (!isFalling)
@@ -117,6 +127,10 @@ public class BeehiveMiniGame1 : MonoBehaviour
         beehiveRb.bodyType = RigidbodyType2D.Dynamic;
         beehiveRb.gravityScale = fallGravityScale;
 
+        bo.SetActive(false);
+        doneGO.SetActive(true); 
+        wt.PlayWin(); 
+
         StartCoroutine(LoadNextSceneAfterDelay());
     }
 
@@ -134,6 +148,9 @@ public class BeehiveMiniGame1 : MonoBehaviour
     {
         if (hitsText != null)
             hitsText.text = $"Hits: {hitCount} / {requiredHits}";
+
+        if (scoreFeedback != null)
+            scoreFeedback.Play();
     }
 
     // Called by glove “fist” action

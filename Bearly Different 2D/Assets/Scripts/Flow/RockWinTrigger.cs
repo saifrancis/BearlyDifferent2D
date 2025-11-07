@@ -15,6 +15,13 @@ public class RockWinTrigger : MonoBehaviour
 
     private bool gameWon = false;
 
+    public WinText wt;
+
+    [Header("Rock Vanish (simple)")]
+    public float rockFadeTime = 0.25f; // quarter-second fade
+
+    public ScoreTextFeedback scoreFeedback;
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (gameWon) return;
@@ -31,12 +38,20 @@ public class RockWinTrigger : MonoBehaviour
                 spawner.canSpawn = false;
             }
 
+            var rocks = GameObject.FindGameObjectsWithTag("Rock");
+            foreach (var r in rocks)
+                StartCoroutine(FadeAndDestroy(r));
+
             // ✅ Display win message on screen
             if (winMessage != null)
             {
                 winMessage.text = winText;
                 winMessage.gameObject.SetActive(true);
+                if (scoreFeedback != null)
+                    scoreFeedback.Play();
             }
+
+            wt.PlayWin();   
 
             // ✅ Load next scene after delay
             StartCoroutine(LoadNextSceneAfterDelay());
@@ -47,5 +62,40 @@ public class RockWinTrigger : MonoBehaviour
     {
         yield return new WaitForSeconds(delayBeforeLoad);
         SceneManager.LoadScene(nextSceneName);
+    }
+
+    IEnumerator FadeAndDestroy(GameObject go)
+    {
+        if (go == null) yield break;
+
+        // (optional) freeze physics/collisions so they stop moving during fade
+        var rb = go.GetComponent<Rigidbody2D>();
+        if (rb) rb.simulated = false;
+        var col = go.GetComponent<Collider2D>();
+        if (col) col.enabled = false;
+
+        var sr = go.GetComponent<SpriteRenderer>();
+        if (sr == null) { Destroy(go); yield break; }
+
+        Color c = sr.color;
+        Vector3 startScale = go.transform.localScale;
+        float t = 0f, dur = Mathf.Max(0.01f, rockFadeTime);
+
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float k = t / dur;
+
+            // fade alpha
+            c.a = 1f - k;
+            sr.color = c;
+
+            // (optional) tiny shrink for niceness
+            go.transform.localScale = Vector3.Lerp(startScale, startScale * 0.85f, k);
+
+            yield return null;
+        }
+
+        Destroy(go);
     }
 }

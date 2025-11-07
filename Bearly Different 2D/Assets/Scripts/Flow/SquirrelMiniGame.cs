@@ -54,6 +54,18 @@ public class SquirrelMiniGame : MonoBehaviour
 
     private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
 
+    public WinText wt;
+    public ScoreTextFeedback scoreFeedback;
+
+    [Header("Rhythm Feedback")]
+    public ScoreTextFeedback messageFx;           // drag the ScoreTextFeedback on your messageText
+    public Color exhaustedFlash = new Color32(220, 60, 60, 255);   // red
+    public Color effortFlash = new Color32(255, 210, 70, 255);  // amber
+    public Color perfectFlash = new Color32(80, 220, 120, 255);  // green
+    public float exhaustedScale = 1.05f;
+    public float effortScale = 1.10f;
+    public float perfectScale = 1.20f;
+
     // --------------- Unity ---------------
     void Start()
     {
@@ -74,6 +86,7 @@ public class SquirrelMiniGame : MonoBehaviour
         {
             ToggleHelpPanel();
         }
+        if (helpPanel.activeInHierarchy == true) return;
 
         if (gameWon) return;
 
@@ -126,21 +139,44 @@ public class SquirrelMiniGame : MonoBehaviour
         playerRb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         TriggerJumpFlash();
 
-        // Rhythm feedback
         if (interval < minJumpInterval)
         {
             if (messageText) messageText.text = "Pip is exhausted... too fast!";
+
+            if (messageFx)
+            {
+                messageFx.flashColor = exhaustedFlash;
+                messageFx.popScale = exhaustedScale;
+                messageFx.Play();
+            }
+
             perfectRhythmTimer = 0f;
         }
         else if (interval > maxJumpInterval)
         {
             if (messageText) messageText.text = "A little more effort!";
+
+            if (messageFx)
+            {
+                messageFx.flashColor = effortFlash;
+                messageFx.popScale = effortScale;
+                messageFx.Play();
+            }
+
             perfectRhythmTimer = 0f;
         }
         else
         {
             if (messageText) messageText.text = "Perfect rhythm!";
+
             if (!isShaking) StartCoroutine(ShakeBranch());
+
+            if (messageFx)
+            {
+                messageFx.flashColor = perfectFlash;
+                messageFx.popScale = perfectScale;
+                messageFx.Play();
+            }
 
             perfectRhythmTimer += interval;
 
@@ -176,6 +212,8 @@ public class SquirrelMiniGame : MonoBehaviour
         beehiveRb.transform.SetParent(null);
         beehiveRb.bodyType = RigidbodyType2D.Dynamic;
         if (hiveSprite) hiveSprite.sprite = hiveFallSprite;
+
+        wt.PlayWin();
 
         StartCoroutine(GoToNextScene());
     }

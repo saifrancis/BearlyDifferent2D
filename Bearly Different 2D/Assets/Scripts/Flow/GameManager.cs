@@ -36,12 +36,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject helpPanel;     // assign in Inspector
     [SerializeField] private bool helpStartsVisible = false;
 
+    [Header("Grid Panel")]
+    [SerializeField] private GameObject gridPanel;     // assign in Inspector
+
+    public WinText wt;
+    public ScoreTextFeedback scoreFeedback;
+
     void Start()
     {
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
         UpdateScoreUI();
 
-        if (helpPanel) helpPanel.SetActive(helpStartsVisible);   // init
+        if (helpPanel)
+        {
+            helpPanel.SetActive(helpStartsVisible);   // init
+            Time.timeScale = 0;
+        }
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
         UpdateScoreUI();
     }
@@ -50,6 +60,8 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.H))
             ToggleHelpPanel();
+
+        if (helpPanel.activeInHierarchy) return;
 
         if (levelComplete || isResolving) return;
 
@@ -85,6 +97,7 @@ public class GameManager : MonoBehaviour
         if (!helpPanel) return;
         bool next = !helpPanel.activeSelf;
         helpPanel.SetActive(next);
+        Time.timeScale = 1f;
 
        
     }
@@ -135,9 +148,13 @@ public class GameManager : MonoBehaviour
 
             successfulMatches += groups.Count;
             UpdateScoreUI();
+            if (scoreFeedback != null)
+                scoreFeedback.Play();
 
             if (successfulMatches >= matchesNeeded)
             {
+                gridPanel.SetActive(false); 
+                wt.PlayWin();
                 levelComplete = true;
                 yield return new WaitForSeconds(0.5f);
                 StartCoroutine(LoadNextSceneAfterDelay(5f));
