@@ -31,6 +31,8 @@ public class BeehiveMiniGame3 : MonoBehaviour
             ToggleHelpPanel();
         }
 
+        if (helpPanel.activeInHierarchy == true) return;
+
         // --- Gameplay logic ---
         if (canSpawn && Input.GetKeyDown(KeyCode.Space))
         {

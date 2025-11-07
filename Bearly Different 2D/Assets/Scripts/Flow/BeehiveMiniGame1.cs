@@ -75,6 +75,8 @@ public class BeehiveMiniGame1 : MonoBehaviour
             ToggleHelpPanel();
         }
 
+        if (helpPanel.activeInHierarchy == true) return;
+
         // --- Normal gameplay ---
         if (!isFalling)
         {

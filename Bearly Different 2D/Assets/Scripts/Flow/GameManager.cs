@@ -47,7 +47,11 @@ public class GameManager : MonoBehaviour
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
         UpdateScoreUI();
 
-        if (helpPanel) helpPanel.SetActive(helpStartsVisible);   // init
+        if (helpPanel)
+        {
+            helpPanel.SetActive(helpStartsVisible);   // init
+            Time.timeScale = 0;
+        }
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
         UpdateScoreUI();
     }
@@ -56,6 +60,8 @@ public class GameManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.H))
             ToggleHelpPanel();
+
+        if (helpPanel.activeInHierarchy) return;
 
         if (levelComplete || isResolving) return;
 
@@ -91,6 +97,7 @@ public class GameManager : MonoBehaviour
         if (!helpPanel) return;
         bool next = !helpPanel.activeSelf;
         helpPanel.SetActive(next);
+        Time.timeScale = 1f;
 
        
     }

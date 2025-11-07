@@ -52,6 +52,9 @@ public class SliderManager : MonoBehaviour
     private AnimationCurve solveEase =
     AnimationCurve.EaseInOut(0f, 0f, 1f, 1f); // easing for move/scale
 
+    bool startShow = true;
+    bool allowMove = false;
+
     void Start()
     {
         pieces = new List<Transform>();
@@ -62,8 +65,6 @@ public class SliderManager : MonoBehaviour
         if (helpPanel != null)
             helpPanel.SetActive(helpStartsVisible);
 
-        // Start solved, show full image briefly, then apply target layout
-        StartCoroutine(ShowSolvedThenApplyTarget());
     }
 
     void Update()
@@ -73,6 +74,17 @@ public class SliderManager : MonoBehaviour
         {
             ToggleHelpPanel();
         }
+
+        if (helpPanel.activeInHierarchy) return;
+
+        if (startShow)
+        {
+            // Start solved, show full image briefly, then apply target layout
+            StartCoroutine(ShowSolvedThenApplyTarget());
+            startShow = false;
+        }
+
+        if (!allowMove) return;
 
         HandleArrowKeys();
         HandleSpacebar();
@@ -165,6 +177,7 @@ public class SliderManager : MonoBehaviour
 
         // Apply fixed shuffled layout
         ApplyTargetLayout();
+        allowMove = true;
     }
 
     private void ApplyTargetLayout()
