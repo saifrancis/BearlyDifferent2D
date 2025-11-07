@@ -21,6 +21,8 @@ public class FishManager : MonoBehaviour
     private int score = 0;
     private int targetScore = 5; // Number of leaves needed to win
 
+    public WinText wt; 
+
     private void Awake()
     {
         Instance = this;
@@ -77,6 +79,9 @@ public class FishManager : MonoBehaviour
         if (score >= targetScore)
         {
             scoreText.text = "YOU WIN!";
+
+            wt.PlayWin(); 
+
             CancelInvoke(nameof(SpawnLeaf));
             Invoke(nameof(GoToNextScene), 5f);
         }

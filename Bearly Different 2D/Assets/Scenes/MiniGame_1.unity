@@ -4372,9 +4372,17 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 512436752}
     m_Modifications:
+    - target: {fileID: 4008985293512221732, guid: cced4199430082d4e81ccd78a68ed62b, type: 3}
+      propertyPath: m_text
+      value: '"Sweet Breakfast!"'
+      objectReference: {fileID: 0}
     - target: {fileID: 4008985293512221734, guid: cced4199430082d4e81ccd78a68ed62b, type: 3}
       propertyPath: m_Name
       value: 'Win Txt '
+      objectReference: {fileID: 0}
+    - target: {fileID: 4008985293512221734, guid: cced4199430082d4e81ccd78a68ed62b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4008985293512221735, guid: cced4199430082d4e81ccd78a68ed62b, type: 3}
       propertyPath: m_Pivot.x
