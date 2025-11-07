@@ -40,6 +40,7 @@ public class UnifiedGloveController : MonoBehaviour
     private GameObject beehiveMiniGame3Object;
     private UnityEngine.Object sliderManager;
     private UnityEngine.Object panelManager;
+    private UnityEngine.Object fishManager;
     private Transform playerTransform;
     private Transform[] lanes;
 
@@ -126,12 +127,26 @@ public class UnifiedGloveController : MonoBehaviour
     private static readonly bool[] Pat2 = { true, false, false, true, true };
     private static readonly bool[] Pat3 = { true, true, false, false, false };
 
+    private static readonly bool[] ThumbsUpPat = { false, true, true, true, true };
+    private float thumbsUpHoldSeconds = 0.5f;
+    private float thumbsUpCooldownSeconds = 0.75f;
+    private float _thumbsUpStart = 0f;
+    private bool _thumbsUpTracking = false;
+    private float _lastThumbsUpTime = -999f;
+
+    private bool invertFlexBits = false;
+    private int[] fingerOrder = { 0, 1, 2, 3, 4 };
+
     private static readonly Regex TripleNumberRegex =
         new Regex(@"([-+]?\d+(?:[.,]\d+)?)[^\d+-]+([-+]?\d+(?:[.,]\d+)?)[^\d+-]+([-+]?\d+(?:[.,]\d+)?)",
                   RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    // sequence coroutine handle
     private Coroutine _seqRoutine;
+
+    // Name line thumbs up support
+    private readonly bool[] _bentNow = new bool[5];
+    private readonly float[] _bentExpiry = new float[5];
+    private float nameHoldSeconds = 2.0f;
 
     private void Awake()
     {
@@ -175,6 +190,19 @@ public class UnifiedGloveController : MonoBehaviour
         if (mode == Mode.MiniGame3) SnapToLane(0);
     }
 
+    private static Mode GuessModeFromScene(string scene)
+    {
+        string s = scene.ToLowerInvariant();
+        if (s.Contains("minigame_1")) return Mode.MiniGame1;
+        if (s.Contains("minigame_2.1") || s.Contains("minigame_2_1")) return Mode.MiniGame2_1;
+        if (s.Contains("minigame_2.2") || s.Contains("minigame_2_2")) return Mode.MiniGame2_2;
+        if (s.Contains("minigame_2.3") || s.Contains("minigame_2_3")) return Mode.MiniGame2_3;
+        if (s.Contains("minigame_3")) return Mode.MiniGame3;
+        if (s.Contains("minigame_4")) return Mode.MiniGame4;
+        if (s.Contains("1page") || s.Contains("2page") || s.Contains("3page") || s.Contains("4page") || s.Contains("5page") || s.Contains("6page")) return Mode.Pages;
+        return Mode.Pages;
+    }
+
     private void ResetPerSceneRuntime()
     {
         _requireNeutralGate = false;
@@ -197,34 +225,13 @@ public class UnifiedGloveController : MonoBehaviour
         _lastLaneTime = -999f;
         _lastCatchTime = -999f;
         _lastChoiceTime = -999f;
-    }
 
-    private void Update()
-    {
-        while (_main.TryDequeue(out var act)) act();
+        _thumbsUpStart = 0f;
+        _thumbsUpTracking = false;
+        _lastThumbsUpTime = -999f;
 
-        if (_windowActive && (Time.time - _windowStart) > gestureWindowSeconds) ResetFingerWindow();
-
-        if (_fistWindowActive)
-        {
-            float len = mode == Mode.MiniGame4 ? miniGame4FistWindowSeconds : fistWindowSeconds;
-            if (Time.time - _fistWindowStart > len) ResetFistWindow();
-        }
-
-        if (_hasSample && UsesPoses(mode)) UpdatePosePipeline();
-    }
-
-    private static Mode GuessModeFromScene(string scene)
-    {
-        string s = scene.ToLowerInvariant();
-        if (s.Contains("minigame_1")) return Mode.MiniGame1;
-        if (s.Contains("minigame_2.1") || s.Contains("minigame_2_1")) return Mode.MiniGame2_1;
-        if (s.Contains("minigame_2.2") || s.Contains("minigame_2_2")) return Mode.MiniGame2_2;
-        if (s.Contains("minigame_2.3") || s.Contains("minigame_2_3")) return Mode.MiniGame2_3;
-        if (s.Contains("minigame_3")) return Mode.MiniGame3;
-        if (s.Contains("minigame_4")) return Mode.MiniGame4;
-        if (s.Contains("1page") || s.Contains("2page") || s.Contains("3page") || s.Contains("4page") || s.Contains("5page") || s.Contains("6page")) return Mode.Pages;
-        return Mode.Pages;
+        Array.Clear(_bentNow, 0, _bentNow.Length);
+        Array.Clear(_bentExpiry, 0, _bentExpiry.Length);
     }
 
     private void AutoWireSceneRefs()
@@ -234,9 +241,10 @@ public class UnifiedGloveController : MonoBehaviour
         squirrelGame = null;
         beehiveMiniGame3Object = null;
         sliderManager = null;
+        panelManager = null;
+        fishManager = null;
         playerTransform = null;
         lanes = null;
-        panelManager = null;
 
         switch (mode)
         {
@@ -258,13 +266,63 @@ public class UnifiedGloveController : MonoBehaviour
             case Mode.MiniGame3:
                 ResolvePlayer();
                 ResolveLanes();
+                fishManager = FindInActiveSceneByTypeName("FishManager");
                 break;
             case Mode.Pages:
                 panelManager = FindInActiveSceneByTypeName("PanelManager");
                 break;
-            default:
-                break;
         }
+    }
+
+    private void Update()
+    {
+        while (_main.TryDequeue(out var act)) act();
+
+        DecayNameBentStates();
+
+        if (_thumbsUpTracking)
+        {
+            bool[] cur = new bool[5];
+            for (int i = 0; i < 5; i++) cur[i] = _bentNow[i];
+            UpdateThumbsUpDetection(cur);
+        }
+
+        if (_windowActive && (Time.time - _windowStart) > gestureWindowSeconds) ResetFingerWindow();
+
+        if (_fistWindowActive)
+        {
+            float len = mode == Mode.MiniGame4 ? miniGame4FistWindowSeconds : fistWindowSeconds;
+            if (Time.time - _fistWindowStart > len) ResetFistWindow();
+        }
+
+        if (_hasSample && UsesPoses(mode)) UpdatePosePipeline();
+    }
+
+    private void DecayNameBentStates()
+    {
+        float now = Time.time;
+        for (int i = 0; i < 5; i++)
+        {
+            if (_bentNow[i] && now > _bentExpiry[i]) _bentNow[i] = false;
+        }
+    }
+
+    private void NoteBentByNameIndex(int canonicalIndex)
+    {
+        if (canonicalIndex < 0 || canonicalIndex >= 5) return;
+        _bentNow[canonicalIndex] = true;
+        _bentExpiry[canonicalIndex] = Time.time + nameHoldSeconds;
+
+        bool[] cur = new bool[5];
+        for (int i = 0; i < 5; i++) cur[i] = _bentNow[i];
+        //Debug.Log($"[NAME bent snapshot] {(cur[0] ? '1' : '0')}{(cur[1] ? '1' : '0')}{(cur[2] ? '1' : '0')}{(cur[3] ? '1' : '0')}{(cur[4] ? '1' : '0')}");
+        UpdateThumbsUpDetection(cur);
+    }
+
+    private static GameObject[] SafeFindGameObjectsWithTag(string tag)
+    {
+        try { return GameObject.FindGameObjectsWithTag(tag); }
+        catch { return Array.Empty<GameObject>(); }
     }
 
     private void ResolvePlayer()
@@ -310,12 +368,6 @@ public class UnifiedGloveController : MonoBehaviour
             if (n.Contains("lane") || n.Contains("zone")) list.Add(t);
         }
         lanes = list.OrderBy(t => t.position.x).ToArray();
-    }
-
-    private static GameObject[] SafeFindGameObjectsWithTag(string tag)
-    {
-        try { return GameObject.FindGameObjectsWithTag(tag); }
-        catch { return Array.Empty<GameObject>(); }
     }
 
     private static UnityEngine.Object FindInActiveSceneByTypeName(string typeName)
@@ -454,7 +506,6 @@ public class UnifiedGloveController : MonoBehaviour
             CallIfPresent(sliderManager, "GloveMoveDown", pose == "DOWN");
         }
 
-        // sequences 1 to 5 for poses
         if (pose == "RIGHT" && (mode == Mode.Pages || mode == Mode.MiniGame1 || mode == Mode.MiniGame4))
             FlashSequence(4);
         else if (pose == "LEFT" && (mode == Mode.Pages || mode == Mode.MiniGame1 || mode == Mode.MiniGame4))
@@ -481,6 +532,66 @@ public class UnifiedGloveController : MonoBehaviour
         }
     }
 
+    private void TryInvokeMany(UnityEngine.Object target, params string[] methodNames)
+    {
+        if (target == null) return;
+        var tp = target.GetType();
+
+        foreach (var name in methodNames)
+        {
+            var mi = tp.GetMethod(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+            if (mi != null)
+            {
+                try { mi.Invoke(target, null); Debug.Log($"[Help] Invoked {tp.Name}.{name}"); }
+                catch { }
+                return;
+            }
+        }
+
+        if (target is MonoBehaviour mb)
+        {
+            foreach (var name in methodNames)
+            {
+                try { mb.gameObject.SendMessage(name, SendMessageOptions.DontRequireReceiver); Debug.Log($"[Help] SendMessage {mb.name}.{name}"); return; }
+                catch { }
+            }
+        }
+    }
+
+    private IEnumerable<UnityEngine.Object> GetHelpTargets()
+    {
+        switch (mode)
+        {
+            case Mode.Pages:
+                if (panelManager != null) yield return panelManager;
+                break;
+            case Mode.MiniGame1:
+                if (gameManager != null) yield return gameManager;
+                break;
+            case Mode.MiniGame2_1:
+                if (beehiveGame1 != null) yield return beehiveGame1;
+                break;
+            case Mode.MiniGame2_2:
+                if (squirrelGame != null) yield return squirrelGame;
+                break;
+            case Mode.MiniGame2_3:
+                if (beehiveMiniGame3Object != null) yield return beehiveMiniGame3Object;
+                break;
+            case Mode.MiniGame3:
+                if (fishManager != null) yield return fishManager;
+                break;
+            case Mode.MiniGame4:
+                if (sliderManager != null) yield return sliderManager;
+                break;
+        }
+    }
+
+    private void OpenHelpForCurrentScene()
+    {
+        string[] names = { "OpenHelpPanel", "OpenHelp", "ShowHelp", "ToggleHelpPanel", "ToggleHelp", "TogglePanel" };
+        foreach (var target in GetHelpTargets()) TryInvokeMany(target, names);
+    }
+
     private void StartFingerWindow()
     {
         _windowActive = true;
@@ -503,13 +614,59 @@ public class UnifiedGloveController : MonoBehaviour
         CheckPatternsMaybeChooseOrLane();
     }
 
+    private bool[] NormalizeBits(int[] bits)
+    {
+        bool[] cur = new bool[5];
+        for (int i = 0; i < 5; i++)
+        {
+            int src = fingerOrder[i];
+            int v = (src < bits.Length) ? bits[src] : 0;
+            if (invertFlexBits) v = 1 - v;
+            cur[i] = (v == 1);
+        }
+        return cur;
+    }
+
+    private bool[] NormalizeLatched()
+    {
+        bool[] cur = new bool[5];
+        for (int i = 0; i < 5; i++)
+        {
+            int src = fingerOrder[i];
+            bool bent = (src < _latchedBent.Length) ? _latchedBent[src] : false;
+            cur[i] = bent;
+        }
+        return cur;
+    }
+
+    private string BitsToString(bool[] cur)
+    {
+        char[] c = new char[5];
+        for (int i = 0; i < 5; i++) c[i] = cur[i] ? '1' : '0';
+        return new string(c);
+    }
+
+    private int[] ToBitsFromAnalogThresholded(int[] vals)
+    {
+        int[] bits = new int[5];
+        for (int k = 0; k < 5 && k < vals.Length; k++)
+        {
+            int baseStraight = straightBaseline[k];
+            int bentMin = baseStraight + bentDelta;
+            bits[k] = vals[k] >= bentMin ? 1 : 0;
+        }
+        return bits;
+    }
+
     private void HandleFlexBitfield(int[] bits)
     {
         if (!_windowActive) StartFingerWindow();
+
         int len = Mathf.Min(5, bits.Length);
         for (int k = 0; k < len; k++)
         {
-            if (bits[k] == 1)
+            int b = invertFlexBits ? 1 - bits[k] : bits[k];
+            if (b == 1)
             {
                 _bendStreak[k] = Mathf.Min(_bendStreak[k] + 1, 1000);
                 if (_bendStreak[k] >= bendConfirmCount) _bits[k] = true;
@@ -517,11 +674,18 @@ public class UnifiedGloveController : MonoBehaviour
             else _bendStreak[k] = 0;
         }
         CheckPatternsMaybeChooseOrLane();
+
+        bool[] cur = NormalizeBits(bits);
+        Debug.Log($"[FLEX bits norm] {BitsToString(cur)}");
+        UpdateThumbsUpDetection(cur);
+
+        for (int i = 0; i < 5; i++) { _bentNow[i] = cur[i]; _bentExpiry[i] = Time.time + nameHoldSeconds; }
     }
 
     private void HandleFlexAnalog(int[] vals)
     {
         if (!_windowActive) StartFingerWindow();
+
         int len = Mathf.Min(5, vals.Length);
         for (int k = 0; k < len; k++)
         {
@@ -535,6 +699,12 @@ public class UnifiedGloveController : MonoBehaviour
             if (_latchedBent[k]) _bits[k] = true;
         }
         CheckPatternsMaybeChooseOrLane();
+
+        bool[] cur = NormalizeLatched();
+        Debug.Log($"[FLEXA latched norm] {BitsToString(cur)}");
+        UpdateThumbsUpDetection(cur);
+
+        for (int i = 0; i < 5; i++) { _bentNow[i] = cur[i]; _bentExpiry[i] = Time.time + nameHoldSeconds; }
     }
 
     private void CheckPatternsMaybeChooseOrLane()
@@ -572,12 +742,52 @@ public class UnifiedGloveController : MonoBehaviour
         if (logPoses) Debug.Log($"[CHOICE] {n}");
         OnChoice?.Invoke(n);
 
-        // sequences 12 to 14 for Page 3 choices
-        if ((mode == Mode.Pages && IsOnPage3()))
+        if (mode == Mode.Pages && IsOnPage3())
         {
             if (n == 1) FlashSequence(12);
             else if (n == 2) FlashSequence(13);
             else if (n == 3) FlashSequence(14);
+        }
+    }
+
+    private void UpdateThumbsUpDetection(bool[] currentBent)
+    {
+        bool isThumbsUpNow = true;
+        for (int i = 0; i < 5; i++)
+        {
+            bool want = ThumbsUpPat[i];
+            bool have = i < currentBent.Length ? currentBent[i] : false;
+            if (have != want) { isThumbsUpNow = false; break; }
+        }
+
+        float now = Time.time;
+
+        if (!isThumbsUpNow)
+        {
+            _thumbsUpTracking = false;
+            _thumbsUpStart = 0f;
+            return;
+        }
+
+        if (!_thumbsUpTracking)
+        {
+            _thumbsUpTracking = true;
+            _thumbsUpStart = now;
+            Debug.Log("[THUMBS UP] hold started");
+            return;
+        }
+
+        if (now - _thumbsUpStart >= thumbsUpHoldSeconds)
+        {
+            if (now - _lastThumbsUpTime >= thumbsUpCooldownSeconds)
+            {
+                _lastThumbsUpTime = now;
+                Debug.Log("[THUMBS UP] triggered");
+                OpenHelpForCurrentScene();
+                FlashSequence(5);
+            }
+            _thumbsUpTracking = false;
+            _thumbsUpStart = 0f;
         }
     }
 
@@ -596,16 +806,21 @@ public class UnifiedGloveController : MonoBehaviour
 
     private void HandleFlexBitfieldForFist(int[] bits)
     {
-        bool all = true;
-        for (int i = 0; i < 5 && i < bits.Length; i++) if (bits[i] == 0) { all = false; break; }
-        if (all) { FireFistIfCooldown(); ResetFistWindow(); return; }
+        bool allBent = true;
+        for (int i = 0; i < 5 && i < bits.Length; i++)
+        {
+            int v = invertFlexBits ? 1 - bits[i] : bits[i];
+            if (v == 0) { allBent = false; break; }
+        }
+        if (allBent) { FireFistIfCooldown(); ResetFistWindow(); return; }
 
         int len = Mathf.Min(5, bits.Length);
         for (int i = 0; i < len; i++)
         {
-            if (_prevFlex[i] == 0 && bits[i] == 1) HandleFingerNameForFist(FingerNames[i]);
+            int cur = invertFlexBits ? 1 - bits[i] : bits[i];
+            if ((_prevFlex[i] == 0) && (cur == 1)) HandleFingerNameForFist(FingerNames[i]);
+            _prevFlex[i] = cur;
         }
-        Array.Copy(bits, _prevFlex, len);
     }
 
     private void TryCompleteFistIfReady()
@@ -627,9 +842,7 @@ public class UnifiedGloveController : MonoBehaviour
         else if (mode == Mode.MiniGame2_2) CallIfPresent(squirrelGame, "OnFist", true);
         else if (mode == Mode.MiniGame2_3 && beehiveMiniGame3Object != null) beehiveMiniGame3Object.SendMessage("SpawnRock", SendMessageOptions.DontRequireReceiver);
         else if (mode == Mode.MiniGame4) CallIfPresent(sliderManager, "GloveSelect", true);
-        else if (mode == Mode.Pages) CallIfPresent(panelManager, "TogglePanel", true);
 
-        // sequences 7 to 10 for fist per mode
         if (mode == Mode.MiniGame1 || mode == Mode.MiniGame4) FlashSequence(7);
         else if (mode == Mode.MiniGame2_1) FlashSequence(8);
         else if (mode == Mode.MiniGame2_2) FlashSequence(9);
@@ -762,6 +975,8 @@ public class UnifiedGloveController : MonoBehaviour
                     if (mode == Mode.MiniGame1 || mode == Mode.MiniGame2_1 || mode == Mode.MiniGame2_2 || mode == Mode.MiniGame2_3 || mode == Mode.MiniGame4
                         || mode == Mode.Pages)
                         _main.Enqueue(() => HandleFingerNameForFist(low));
+
+                    _main.Enqueue(() => NoteBentByNameIndex(idx));
                 }
                 else if (low.StartsWith("flex ") || low == "flex")
                 {
@@ -781,9 +996,7 @@ public class UnifiedGloveController : MonoBehaviour
                             if (mode == Mode.Pages || mode == Mode.MiniGame3)
                                 _main.Enqueue(() => HandleFlexBitfield(copy));
 
-                            if (mode == Mode.MiniGame1 || mode == Mode.MiniGame2_1 || mode == Mode.MiniGame2_2 || mode == Mode.MiniGame2_3 || mode == Mode.MiniGame4
-                                || mode == Mode.Pages)
-                                _main.Enqueue(() => HandleFlexBitfieldForFist((int[])copy.Clone()));
+                            _main.Enqueue(() => HandleFlexBitfieldForFist((int[])copy.Clone()));
                         }
                     }
                 }
@@ -805,10 +1018,7 @@ public class UnifiedGloveController : MonoBehaviour
                             if (mode == Mode.Pages || mode == Mode.MiniGame3)
                                 _main.Enqueue(() => HandleFlexAnalog(copy));
 
-                            if (mode != Mode.Pages && mode != Mode.MiniGame3)
-                                _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalog(copy)));
-                            else
-                                _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalog(copy)));
+                            _main.Enqueue(() => HandleFlexBitfieldForFist(ToBitsFromAnalogThresholded(copy)));
                         }
                     }
                 }
@@ -884,7 +1094,6 @@ public class UnifiedGloveController : MonoBehaviour
         return bits;
     }
 
-    // sequence helpers
     private void SendSeq(int n)
     {
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
