@@ -1219,10 +1219,10 @@ MonoBehaviour:
   homeTrackB: {fileID: 8300000, guid: 82f9ccdb8059aaf4fa14cee334d4fe58, type: 3}
   gameTrackA: {fileID: 8300000, guid: 65b540d71f52f6c42955738b8abde3f7, type: 3}
   gameTrackB: {fileID: 8300000, guid: 82f9ccdb8059aaf4fa14cee334d4fe58, type: 3}
-  homeVolumeA: 0.2
-  homeVolumeB: 0.2
-  gameVolumeA: 0.2
-  gameVolumeB: 0.2
+  homeVolumeA: 0.1
+  homeVolumeB: 0.05
+  gameVolumeA: 0.1
+  gameVolumeB: 0.05
   crossfadeSeconds: 2
 --- !u!4 &1829364524
 Transform:
