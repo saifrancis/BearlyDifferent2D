@@ -24,6 +24,9 @@ public class FishManager : MonoBehaviour
     public WinText wt;
     public ScoreTextFeedback scoreFeedback;
 
+    [Header("Catch FX")]
+    public ParticleSystem catchFXPrefab;
+
     private void Awake()
     {
         Instance = this;
@@ -73,6 +76,19 @@ public class FishManager : MonoBehaviour
     public void CaughtLeaf(Leaf leaf)
     {
         score++;
+
+        if (leaf != null)
+        {
+            if (catchFXPrefab != null)
+            {
+                ParticleSystem fx = Instantiate(catchFXPrefab, leaf.transform.position, Quaternion.identity);
+                fx.Play();
+                Destroy(fx.gameObject, fx.main.duration + fx.main.startLifetime.constantMax + 0.2f);
+            }
+
+            Destroy(leaf.gameObject);
+        }
+
         if (leaf != null) Destroy(leaf.gameObject);
         UpdateScoreUI();
 
