@@ -42,6 +42,8 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
     public ScoreTextFeedback scoreFeedback;
 
+    public GameObject doneGO; 
+
     private bool HelpVisible => helpPanel != null && helpPanel.activeSelf;
 
     public WinText wt;
@@ -123,7 +125,8 @@ public class BeehiveMiniGame1 : MonoBehaviour
         beehiveRb.bodyType = RigidbodyType2D.Dynamic;
         beehiveRb.gravityScale = fallGravityScale;
 
-        bo.SetActive(false); 
+        bo.SetActive(false);
+        doneGO.SetActive(true); 
         wt.PlayWin(); 
 
         StartCoroutine(LoadNextSceneAfterDelay());
