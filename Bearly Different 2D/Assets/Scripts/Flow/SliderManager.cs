@@ -42,6 +42,15 @@ public class SliderManager : MonoBehaviour
     [SerializeField] private string vfxSortingLayer = "Effects";
     [SerializeField] private int vfxSortingOrder = 50;
 
+    public WinText wt;
+
+    [Header("Solve Animation")]
+    [SerializeField] private Vector3 solvedTargetPosition = new Vector3(0f, -2.5f, 0f); // world-space target
+    [SerializeField] private float solvedTargetScale = 0.5f;                              // 1 = no change
+    [SerializeField] private float solveMoveDuration = 0.8f;                              // seconds
+    [SerializeField]
+    private AnimationCurve solveEase =
+    AnimationCurve.EaseInOut(0f, 0f, 1f, 1f); // easing for move/scale
 
     void Start()
     {
@@ -273,6 +282,10 @@ public class SliderManager : MonoBehaviour
         BGSprite.sprite = ColourSprite;
         PlaySolveVFX();
 
+        yield return StartCoroutine(AnimateBoardOnSolve());
+
+        wt.PlayWin();
+
         yield return new WaitForSeconds(5f);
         SceneManager.LoadScene("6Page_Six");
     }
@@ -383,5 +396,34 @@ public class SliderManager : MonoBehaviour
         main.stopAction = ParticleSystemStopAction.Destroy;
 
         ps.Play();
+    }
+
+    private IEnumerator AnimateBoardOnSolve()
+    {
+        if (gameTransform == null) yield break;
+
+        Vector3 startPos = gameTransform.position;
+        Vector3 startScale = gameTransform.localScale;
+
+        Vector3 endPos = solvedTargetPosition;
+        Vector3 endScale = Vector3.one * solvedTargetScale;
+
+        float t = 0f;
+        float dur = Mathf.Max(0.01f, solveMoveDuration);
+
+        while (t < dur)
+        {
+            t += Time.deltaTime;
+            float k = Mathf.Clamp01(t / dur);
+            float e = solveEase.Evaluate(k);
+
+            gameTransform.position = Vector3.LerpUnclamped(startPos, endPos, e);
+            gameTransform.localScale = Vector3.LerpUnclamped(startScale, endScale, e);
+
+            yield return null;
+        }
+
+        gameTransform.position = endPos;
+        gameTransform.localScale = endScale;
     }
 }
