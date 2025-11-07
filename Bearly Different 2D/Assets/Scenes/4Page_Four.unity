@@ -748,7 +748,8 @@ MonoBehaviour:
   growWaitAfter: 10
   growTargetAnchoredPos: {x: 0, y: 0}
   growTargetSize: {x: 252.1366, y: 356.5933}
-  panelVoiceClips: []
+  panelVoiceClips:
+  - {fileID: 0}
   voiceVolume: 1
   voiceSource: {fileID: 0}
   useGloveInput: 1

@@ -50,6 +50,22 @@ public class PanelManager : MonoBehaviour
     [Tooltip("Optional: assign an existing AudioSource. If left empty, one will be added automatically.")]
     public AudioSource voiceSource;
 
+    [Header("Voice Assist Opt-In (Home Page Only)")]
+    [Tooltip("Name of the home scene where we ask the player if they want voice assistance.")]
+    public string homeSceneName = "0HomePage";
+
+    [Tooltip("Show the opt-in UI on the home scene.")]
+    public bool showVoiceOptInOnHome = true;
+
+    [Tooltip("Optional: a small panel to show on Home asking to enable/disable voice. (Shown only on Home.)")]
+    public GameObject voiceOptInPanel;  // e.g., a simple canvas panel with a Text + Toggle + Close button
+
+    [Tooltip("Optional: Toggle UI bound to enabling voice assistance (Home only).")]
+    public Toggle voiceAssistToggleUI;
+
+    private const string PREF_VOICE_ENABLED = "VOICE_ASSIST_ENABLED";
+    private bool voiceAssistEnabled = false;   // default off unless player opts in on Home
+
     [Header("Glove Control")]
     public bool useGloveInput = true;
     private UnifiedGloveController accRef;
@@ -66,8 +82,7 @@ public class PanelManager : MonoBehaviour
     {
         public GameObject obj;
         public int steps;
-        [HideInInspector]
-        public int startIndex;
+        [HideInInspector] public int startIndex;
     }
 
     [Header("Selective Deactivate When Advancing")]
@@ -78,7 +93,7 @@ public class PanelManager : MonoBehaviour
     public bool fadeOutOnDeactivate = true;
     public float deactivateFadeDuration = 0.2f;
 
-
+    // -------------------- Lifecycle --------------------
 
     void Awake()
     {
@@ -105,10 +120,13 @@ public class PanelManager : MonoBehaviour
         {
             voiceSource = gameObject.AddComponent<AudioSource>();
             voiceSource.playOnAwake = false;
-            voiceSource.loop = false;           // dialogue should not loop
-            voiceSource.spatialBlend = 0f;      // 2D
+            voiceSource.loop = false;       // dialogue should not loop
+            voiceSource.spatialBlend = 0f;  // 2D
             voiceSource.volume = voiceVolume;
         }
+
+        // Load persisted voice-assist choice (default off)
+        voiceAssistEnabled = PlayerPrefs.GetInt(PREF_VOICE_ENABLED, 0) == 1;
 
         // Optional glove input
         if (useGloveInput)
@@ -126,6 +144,29 @@ public class PanelManager : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        // If we are on the Home scene, show the opt-in UI (if provided and enabled)
+        if (SceneManager.GetActiveScene().name == homeSceneName && showVoiceOptInOnHome)
+        {
+            if (voiceOptInPanel != null)
+                voiceOptInPanel.SetActive(true);
+
+            if (voiceAssistToggleUI != null)
+            {
+                // Reflect current setting
+                voiceAssistToggleUI.isOn = voiceAssistEnabled;
+                // Make sure change writes to PlayerPrefs
+                voiceAssistToggleUI.onValueChanged.AddListener(OnVoiceAssistToggled);
+            }
+        }
+        else
+        {
+            // Not on Home: just respect stored preference (no prompt)
+            if (!voiceAssistEnabled) StopVoice();
+        }
+    }
+
     void OnDestroy()
     {
         if (accRef != null)
@@ -133,7 +174,37 @@ public class PanelManager : MonoBehaviour
             accRef.OnPose -= OnAccelPose;
             accRef.OnChoice -= OnAccelChoice;
         }
+        // Detach listener to avoid leaks in editor
+        if (voiceAssistToggleUI != null)
+            voiceAssistToggleUI.onValueChanged.RemoveListener(OnVoiceAssistToggled);
     }
+
+    // -------------------- Voice Opt-In Controls (Home) --------------------
+
+    /// <summary>
+    /// Hook this to your Toggle's OnValueChanged (bool).
+    /// Also called programmatically in Start() to sync state.
+    /// </summary>
+    public void OnVoiceAssistToggled(bool enabled)
+    {
+        voiceAssistEnabled = enabled;
+        PlayerPrefs.SetInt(PREF_VOICE_ENABLED, voiceAssistEnabled ? 1 : 0);
+        PlayerPrefs.Save();
+
+        if (!voiceAssistEnabled)
+            StopVoice(); // cut any currently playing dialogue
+    }
+
+    /// <summary>
+    /// Optional: hook to a Close/Continue button on the opt-in panel.
+    /// </summary>
+    public void CloseVoiceOptInPanel()
+    {
+        if (voiceOptInPanel != null)
+            voiceOptInPanel.SetActive(false);
+    }
+
+    // -------------------- Input / Flow --------------------
 
     private void OnAccelPose(string pose)
     {
@@ -226,8 +297,11 @@ public class PanelManager : MonoBehaviour
             currentIndex++;
             StartCoroutine(FadeInPanel(panels[currentIndex]));
 
-            // 🔊 Play per-panel dialogue immediately (cuts previous)
-            PlayVoiceFor(currentIndex);
+            // 🔊 Play per-panel dialogue only if voice-assist is enabled
+            if (voiceAssistEnabled)
+                PlayVoiceFor(currentIndex);
+            else
+                StopVoice();
 
             // If this is the last panel…
             if (currentIndex == panels.Length - 1)
@@ -264,16 +338,11 @@ public class PanelManager : MonoBehaviour
         if (currentIndex > 0)
         {
             CheckPanelsToDeactivate();
-            //var prev = panels[currentIndex - 1];
-            //if (ShouldDeactivate(prev))
-            //{
-            //    if (fadeOutOnDeactivate) StartCoroutine(FadeOutAndDeactivate(prev));
-            //    else prev.SetActive(false);
-            //}
         }
     }
 
-    // --- Dialogue control ---
+    // -------------------- Dialogue control --------------------
+
     private void PlayVoiceFor(int index)
     {
         if (voiceSource == null) return;
@@ -297,6 +366,8 @@ public class PanelManager : MonoBehaviour
             voiceSource.Stop();
     }
 
+    // -------------------- Animation / Scene Load --------------------
+
     IEnumerator FadeInPanel(GameObject panel)
     {
         if (panel == null) yield break;
@@ -318,7 +389,7 @@ public class PanelManager : MonoBehaviour
     {
         isLoadingNextScene = true;
 
-        // Optional: stop any lingering voice before scene transition
+        // If voice is disabled or we’re switching scenes, stop any voice
         StopVoice();
 
         yield return new WaitForSeconds(waitBeforeSceneLoad);
@@ -336,13 +407,13 @@ public class PanelManager : MonoBehaviour
         isLoadingNextScene = true;
         waitingForChoice = false;
 
-        // Optional: stop voice on scene change
+        // Stop voice on scene change
         StopVoice();
 
         SceneManager.LoadScene(sceneName);
     }
 
-    // --- Grow animation keeps cutting/locking voice too ---
+    // --- Grow animation ---
     private IEnumerator GrowAllPanelsThenLoad()
     {
         if (isLoadingNextScene) yield break;
@@ -403,9 +474,11 @@ public class PanelManager : MonoBehaviour
         LoadSceneSafe(nextSceneName);
     }
 
+    // -------------------- Deactivation Helpers --------------------
+
     void CheckPanelsToDeactivate()
     {
-        foreach(DeactivateAfterSteps item in deactivateAfterSteps)
+        foreach (DeactivateAfterSteps item in deactivateAfterSteps)
         {
             GameObject obj = item.obj;
             if (obj != null)
@@ -417,6 +490,7 @@ public class PanelManager : MonoBehaviour
                 }
         }
     }
+
     bool ShouldDeactivate(GameObject panel)
     {
         if (panel == null || deactivateOnAdvance == null) return false;
