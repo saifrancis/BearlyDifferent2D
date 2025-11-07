@@ -749,9 +749,14 @@ MonoBehaviour:
   growTargetAnchoredPos: {x: 0, y: 0}
   growTargetSize: {x: 252.1366, y: 356.5933}
   panelVoiceClips:
-  - {fileID: 0}
+  - {fileID: 8300000, guid: dbe225c3be3088640aefdc42b12d15cb, type: 3}
+  - {fileID: 8300000, guid: 046576bd247363b48a2df7384e7dbe89, type: 3}
   voiceVolume: 1
   voiceSource: {fileID: 0}
+  homeSceneName: 0HomePage
+  showVoiceOptInOnHome: 1
+  voiceOptInPanel: {fileID: 0}
+  voiceAssistToggleUI: {fileID: 0}
   useGloveInput: 1
   togglePanel: {fileID: 665178457}
   toggleKey: 104
