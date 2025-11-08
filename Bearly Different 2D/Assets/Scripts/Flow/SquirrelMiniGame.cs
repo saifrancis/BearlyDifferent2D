@@ -86,7 +86,7 @@ public class SquirrelMiniGame : MonoBehaviour
         {
             ToggleHelpPanel();
         }
-        if (helpPanel.activeInHierarchy == true) return;
+        //if (helpPanel.activeInHierarchy == true) return;
 
         if (gameWon) return;
 

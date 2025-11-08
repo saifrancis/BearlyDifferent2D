@@ -41,7 +41,7 @@ public class FishManager : MonoBehaviour
         if (helpPanel != null)
         {
             helpPanel.SetActive(helpStartsVisible);
-            Time.timeScale = 0f;
+            //Time.timeScale = 0f;
         }
 
         // Start spawning leaves
@@ -63,10 +63,10 @@ public class FishManager : MonoBehaviour
         if (helpPanel == null) return;
         helpPanel.SetActive(!helpPanel.activeSelf);
 
-        if (helpPanel.activeInHierarchy)
+       /* if (helpPanel.activeInHierarchy)
             Time.timeScale = 0f;
         else
-            Time.timeScale = 1f;
+            Time.timeScale = 1f;*/
     }
 
     void SpawnLeaf()

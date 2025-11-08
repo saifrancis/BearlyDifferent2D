@@ -177,7 +177,7 @@ public class SliderManager : MonoBehaviour
 
         // Apply fixed shuffled layout
         ApplyTargetLayout();
-        allowMove = true;
+        //allowMove = true;
     }
 
     private void ApplyTargetLayout()

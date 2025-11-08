@@ -191,17 +191,27 @@ public class UnifiedGloveController : MonoBehaviour
     }
 
     private static Mode GuessModeFromScene(string scene)
-    {
-        string s = scene.ToLowerInvariant();
-        if (s.Contains("minigame_1")) return Mode.MiniGame1;
-        if (s.Contains("minigame_2.1") || s.Contains("minigame_2_1")) return Mode.MiniGame2_1;
-        if (s.Contains("minigame_2.2") || s.Contains("minigame_2_2")) return Mode.MiniGame2_2;
-        if (s.Contains("minigame_2.3") || s.Contains("minigame_2_3")) return Mode.MiniGame2_3;
-        if (s.Contains("minigame_3")) return Mode.MiniGame3;
-        if (s.Contains("minigame_4")) return Mode.MiniGame4;
-        if (s.Contains("1page") || s.Contains("2page") || s.Contains("3page") || s.Contains("4page") || s.Contains("5page") || s.Contains("6page")) return Mode.Pages;
+{
+    string s = scene.ToLowerInvariant();
+
+    // Mini games
+    if (s.Contains("minigame_1")) return Mode.MiniGame1;
+    if (s.Contains("minigame_2.1") || s.Contains("minigame_2_1")) return Mode.MiniGame2_1;
+    if (s.Contains("minigame_2.2") || s.Contains("minigame_2_2")) return Mode.MiniGame2_2;
+    if (s.Contains("minigame_2.3") || s.Contains("minigame_2_3")) return Mode.MiniGame2_3;
+    if (s.Contains("minigame_3")) return Mode.MiniGame3;
+    if (s.Contains("minigame_4")) return Mode.MiniGame4;
+
+    // Pages, include home and menu scenes
+    if (s.Contains("0home") || s.Contains("home") || s.Contains("homepage") || s.Contains("menu") || s.Contains("start"))
         return Mode.Pages;
-    }
+
+    if (s.Contains("1page") || s.Contains("2page") || s.Contains("3page") || s.Contains("4page") || s.Contains("5page") || s.Contains("6page"))
+        return Mode.Pages;
+
+    return Mode.Pages;
+}
+
 
     private void ResetPerSceneRuntime()
     {
