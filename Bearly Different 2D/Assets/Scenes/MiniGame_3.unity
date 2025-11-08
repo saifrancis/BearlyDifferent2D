@@ -4869,6 +4869,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: 'Win Txt '
       objectReference: {fileID: 0}
+    - target: {fileID: 4008985293512221734, guid: cced4199430082d4e81ccd78a68ed62b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4008985293512221735, guid: cced4199430082d4e81ccd78a68ed62b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
