@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Linq;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -41,7 +42,10 @@ public class UnifiedGloveController : MonoBehaviour
     private UnityEngine.Object sliderManager;
     private UnityEngine.Object panelManager;
     private UnityEngine.Object fishManager;
+
     private Transform playerTransform;
+    private PlayerController cachedPlayerController;
+
     private Transform[] lanes;
 
     private const string PlayerTag = "Player";
@@ -49,46 +53,53 @@ public class UnifiedGloveController : MonoBehaviour
     private const string LaneTag = "Lane";
     private const string LanesParentName = "";
 
-    private string preferredPortName = "COM3";
-    private int preferredBaud = 9600;
-    private bool expectsCsv = false;
+    [Header("Serial")]
+    [SerializeField] private string preferredPortName = "COM3";
+    [SerializeField] private int preferredBaud = 9600;
+    [SerializeField] private bool expectsCsv = false;
 
 #if UNITY_EDITOR_WIN || UNITY_STANDALONE_WIN
     private SerialPort _port;
 #endif
 
-    private Vector3 neutralTpl = new Vector3(1.05f, 1.90f, 10.21f);
-    private Vector3 downTpl = new Vector3(10.37f, 0.24f, 1.92f);
-    private Vector3 leftTpl = new Vector3(1.22f, 10.36f, 3.53f);
-    private Vector3 rightTpl = new Vector3(-1.53f, -9.02f, 0.16f);
-    private Vector3 upTpl = new Vector3(-9.53f, 2.12f, 1.73f);
+    [Header("Pose templates")]
+    [SerializeField] private Vector3 neutralTpl = new Vector3(1.05f, 1.90f, 10.21f);
+    [SerializeField] private Vector3 downTpl = new Vector3(10.37f, 0.24f, 1.92f);
+    [SerializeField] private Vector3 leftTpl = new Vector3(1.22f, 10.36f, 3.53f);
+    [SerializeField] private Vector3 rightTpl = new Vector3(-1.53f, -9.02f, 0.16f);
+    [SerializeField] private Vector3 upTpl = new Vector3(-9.53f, 2.12f, 1.73f);
 
-    private float tolerance = 4f;
-    private float alpha = 0.35f;
-    private float dwellTime = 0.12f;
-    private float neutralRearmDwell = 0.25f;
+    [Header("Pose settings")]
+    [SerializeField] private float tolerance = 4f;
+    [SerializeField] private float alpha = 0.35f;
+    [SerializeField] private float dwellTime = 0.12f;
+    [SerializeField] private float neutralRearmDwell = 0.25f;
 
-    private float gestureWindowSeconds = 0.6f;
-    private float choiceCooldownSeconds = 0.25f;
-    private int bendConfirmCount = 2;
+    [Header("Finger window and patterns")]
+    [SerializeField] private float gestureWindowSeconds = 0.6f;
+    [SerializeField] private float choiceCooldownSeconds = 0.25f;
+    [SerializeField] private int bendConfirmCount = 2;
 
-    private int[] straightBaseline = new int[5] { 242, 258, 229, 274, 266 };
-    private int bentDelta = 180;
-    private int straightDelta = 40;
+    [SerializeField] private int[] straightBaseline = new int[5] { 242, 258, 229, 274, 266 };
+    [SerializeField] private int bentDelta = 180;
+    [SerializeField] private int straightDelta = 40;
 
-    private float fistWindowSeconds = 1.5f;
-    private float fistCooldownSeconds = 0.75f;
-    private float miniGame4FistWindowSeconds = 1.25f;
-    private float miniGame4FistCooldownSeconds = 0.5f;
+    [Header("Fist and shake")]
+    [SerializeField] private float fistWindowSeconds = 1.5f;
+    [SerializeField] private float fistCooldownSeconds = 0.75f;
+    [SerializeField] private float miniGame4FistWindowSeconds = 1.25f;
+    [SerializeField] private float miniGame4FistCooldownSeconds = 0.5f;
 
-    private float laneCooldownSeconds = 0.15f;
-    private float catchCooldownSeconds = 0.25f;
-    private float catchRadius = 0.8f;
-    private bool requireLeafInCatchZone = false;
+    [Header("MiniGame3 catch")]
+    [SerializeField] private float laneCooldownSeconds = 0.15f;
+    [SerializeField] private float catchCooldownSeconds = 0.25f;
+    [SerializeField] private float catchRadius = 0.8f;
+    [SerializeField] private bool requireLeafInCatchZone = false;
 
-    private bool logPoses = true;
-    private bool logRawSerial = true;
-    private int rawLogMax = 200;
+    [Header("Debug")]
+    [SerializeField] private bool logPoses = true;
+    [SerializeField] private bool logRawSerial = true;
+    [SerializeField] private int rawLogMax = 200;
 
     private Vector3 _filt;
     private string _lastEmittedPose;
@@ -128,14 +139,14 @@ public class UnifiedGloveController : MonoBehaviour
     private static readonly bool[] Pat3 = { true, true, false, false, false };
 
     private static readonly bool[] ThumbsUpPat = { false, true, true, true, true };
-    private float thumbsUpHoldSeconds = 0.5f;
-    private float thumbsUpCooldownSeconds = 0.75f;
+    [SerializeField] private float thumbsUpHoldSeconds = 0.5f;
+    [SerializeField] private float thumbsUpCooldownSeconds = 0.75f;
     private float _thumbsUpStart = 0f;
     private bool _thumbsUpTracking = false;
     private float _lastThumbsUpTime = -999f;
 
-    private bool invertFlexBits = false;
-    private int[] fingerOrder = { 0, 1, 2, 3, 4 };
+    [SerializeField] private bool invertFlexBits = false;
+    [SerializeField] private int[] fingerOrder = { 0, 1, 2, 3, 4 };
 
     private static readonly Regex TripleNumberRegex =
         new Regex(@"([-+]?\d+(?:[.,]\d+)?)[^\d+-]+([-+]?\d+(?:[.,]\d+)?)[^\d+-]+([-+]?\d+(?:[.,]\d+)?)",
@@ -143,10 +154,9 @@ public class UnifiedGloveController : MonoBehaviour
 
     private Coroutine _seqRoutine;
 
-    // Name line thumbs up support
     private readonly bool[] _bentNow = new bool[5];
     private readonly float[] _bentExpiry = new float[5];
-    private float nameHoldSeconds = 2.0f;
+    [SerializeField] private float nameHoldSeconds = 2.0f;
 
     private void Awake()
     {
@@ -191,27 +201,24 @@ public class UnifiedGloveController : MonoBehaviour
     }
 
     private static Mode GuessModeFromScene(string scene)
-{
-    string s = scene.ToLowerInvariant();
+    {
+        string s = scene.ToLowerInvariant();
 
-    // Mini games
-    if (s.Contains("minigame_1")) return Mode.MiniGame1;
-    if (s.Contains("minigame_2.1") || s.Contains("minigame_2_1")) return Mode.MiniGame2_1;
-    if (s.Contains("minigame_2.2") || s.Contains("minigame_2_2")) return Mode.MiniGame2_2;
-    if (s.Contains("minigame_2.3") || s.Contains("minigame_2_3")) return Mode.MiniGame2_3;
-    if (s.Contains("minigame_3")) return Mode.MiniGame3;
-    if (s.Contains("minigame_4")) return Mode.MiniGame4;
+        if (s.Contains("minigame_1")) return Mode.MiniGame1;
+        if (s.Contains("minigame_2.1") || s.Contains("minigame_2_1")) return Mode.MiniGame2_1;
+        if (s.Contains("minigame_2.2") || s.Contains("minigame_2_2")) return Mode.MiniGame2_2;
+        if (s.Contains("minigame_2.3") || s.Contains("minigame_2_3")) return Mode.MiniGame2_3;
+        if (s.Contains("minigame_3")) return Mode.MiniGame3;
+        if (s.Contains("minigame_4")) return Mode.MiniGame4;
 
-    // Pages, include home and menu scenes
-    if (s.Contains("0home") || s.Contains("home") || s.Contains("homepage") || s.Contains("menu") || s.Contains("start"))
+        if (s.Contains("0home") || s.Contains("home") || s.Contains("homepage") || s.Contains("menu") || s.Contains("start"))
+            return Mode.Pages;
+
+        if (s.Contains("1page") || s.Contains("2page") || s.Contains("3page") || s.Contains("4page") || s.Contains("5page") || s.Contains("6page"))
+            return Mode.Pages;
+
         return Mode.Pages;
-
-    if (s.Contains("1page") || s.Contains("2page") || s.Contains("3page") || s.Contains("4page") || s.Contains("5page") || s.Contains("6page"))
-        return Mode.Pages;
-
-    return Mode.Pages;
-}
-
+    }
 
     private void ResetPerSceneRuntime()
     {
@@ -254,6 +261,7 @@ public class UnifiedGloveController : MonoBehaviour
         panelManager = null;
         fishManager = null;
         playerTransform = null;
+        cachedPlayerController = null;
         lanes = null;
 
         switch (mode)
@@ -277,6 +285,8 @@ public class UnifiedGloveController : MonoBehaviour
                 ResolvePlayer();
                 ResolveLanes();
                 fishManager = FindInActiveSceneByTypeName("FishManager");
+                cachedPlayerController = GameObject.FindObjectOfType<PlayerController>();
+                if (cachedPlayerController != null) playerTransform = cachedPlayerController.transform;
                 break;
             case Mode.Pages:
                 panelManager = FindInActiveSceneByTypeName("PanelManager");
@@ -325,7 +335,6 @@ public class UnifiedGloveController : MonoBehaviour
 
         bool[] cur = new bool[5];
         for (int i = 0; i < 5; i++) cur[i] = _bentNow[i];
-        //Debug.Log($"[NAME bent snapshot] {(cur[0] ? '1' : '0')}{(cur[1] ? '1' : '0')}{(cur[2] ? '1' : '0')}{(cur[3] ? '1' : '0')}{(cur[4] ? '1' : '0')}");
         UpdateThumbsUpDetection(cur);
     }
 
@@ -501,6 +510,34 @@ public class UnifiedGloveController : MonoBehaviour
 
     private void RoutePose(string pose)
     {
+        if (mode == Mode.Pages)
+        {
+            if (pose == "RIGHT")
+            {
+                if (IsHomeScene())
+                {
+                    TryLoadGoToPageOneScene();
+                }
+                else
+                {
+                    if (!TryPanelRight())
+                    {
+                        TryLoadNextPageFromFlow();
+                    }
+                }
+            }
+            else if (pose == "LEFT")
+            {
+                if (!IsHomeScene())
+                {
+                    if (!TryPanelLeft())
+                    {
+                        TryLoadPrevPageFromFlow();
+                    }
+                }
+            }
+        }
+
         if (mode == Mode.MiniGame1)
         {
             CallIfPresent(gameManager, "GloveMoveLeft", pose == "LEFT");
@@ -533,7 +570,7 @@ public class UnifiedGloveController : MonoBehaviour
         if (!condition || target == null) return;
 
         var tp = target.GetType();
-        var mi = tp.GetMethod(method, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+        var mi = tp.GetMethod(method, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         if (mi != null) { mi.Invoke(target, null); return; }
 
         if (target is MonoBehaviour mb)
@@ -549,7 +586,7 @@ public class UnifiedGloveController : MonoBehaviour
 
         foreach (var name in methodNames)
         {
-            var mi = tp.GetMethod(name, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic);
+            var mi = tp.GetMethod(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (mi != null)
             {
                 try { mi.Invoke(target, null); Debug.Log($"[Help] Invoked {tp.Name}.{name}"); }
@@ -876,23 +913,54 @@ public class UnifiedGloveController : MonoBehaviour
         playerTransform.position = p;
     }
 
+    // Leaf catch on shake plus bite flash trigger
     private void TriggerCatchFromShake()
     {
         float now = Time.time;
         if (now - _lastCatchTime < catchCooldownSeconds) return;
         _lastCatchTime = now;
 
-        if (playerTransform == null) return;
-        Vector3 center = new Vector3(playerTransform.position.x, playerTransform.position.y, 0f);
-        Collider2D[] hits = Physics2D.OverlapCircleAll(center, catchRadius);
-        foreach (var h in hits)
+        if (playerTransform == null)
         {
-            var leaf = h.GetComponent<Leaf>();
-            if (leaf != null)
+            if (cachedPlayerController == null)
+                cachedPlayerController = GameObject.FindObjectOfType<PlayerController>();
+            if (cachedPlayerController != null)
+                playerTransform = cachedPlayerController.transform;
+        }
+
+        bool caughtAny = false;
+
+        if (playerTransform != null)
+        {
+            Vector3 center = new Vector3(playerTransform.position.x, playerTransform.position.y, 0f);
+            Collider2D[] hits = Physics2D.OverlapCircleAll(center, catchRadius);
+
+            foreach (var h in hits)
             {
+                var leaf = h.GetComponent<Leaf>();
+                if (leaf == null) continue;
                 if (requireLeafInCatchZone && !leaf.IsInCatchZone()) continue;
+
                 FishManager.Instance.CaughtLeaf(leaf);
+                caughtAny = true;
             }
+        }
+
+        TryTriggerBiteFlash();
+
+        if (caughtAny) Debug.Log("[SHAKE] caught leaf near player");
+    }
+
+    private void TryTriggerBiteFlash()
+    {
+        if (cachedPlayerController == null)
+            cachedPlayerController = GameObject.FindObjectOfType<PlayerController>();
+        if (cachedPlayerController == null) return;
+
+        var mi = typeof(PlayerController).GetMethod("TriggerBiteFlash", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+        if (mi != null)
+        {
+            try { mi.Invoke(cachedPlayerController, null); } catch { }
         }
     }
 
@@ -1129,5 +1197,107 @@ public class UnifiedGloveController : MonoBehaviour
     {
         var s = SceneManager.GetActiveScene().name.ToLowerInvariant();
         return s.Contains("3page");
+    }
+
+    private bool IsHomeScene()
+    {
+        string s = SceneManager.GetActiveScene().name.ToLowerInvariant();
+        return s.Contains("0home") || s.Contains("home") || s.Contains("homepage") || s.Contains("menu") || s.Contains("start");
+    }
+
+    private void TryLoadGoToPageOneScene()
+    {
+        var all = Resources.FindObjectsOfTypeAll<MonoBehaviour>();
+        foreach (var m in all)
+        {
+            if (!m) continue;
+            var go = m.gameObject;
+            if (!go.scene.IsValid() || !go.scene.isLoaded) continue;
+
+            var t = m.GetType();
+            if (t.Name != "GoToPageOne") continue;
+
+            var f = t.GetField("targetScene", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            string next = null;
+
+            if (f != null) next = f.GetValue(m) as string;
+            if (string.IsNullOrWhiteSpace(next))
+            {
+                var p = t.GetProperty("targetScene", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (p != null && p.PropertyType == typeof(string)) next = p.GetValue(m) as string;
+            }
+
+            if (!string.IsNullOrWhiteSpace(next))
+            {
+                SceneManager.LoadScene(next);
+                return;
+            }
+        }
+
+        Debug.LogWarning("GoToPageOne not found, cannot start");
+    }
+
+    private bool TryPanelRight()
+    {
+        if (panelManager == null) return false;
+        TryInvokeMany(panelManager, "OnRight", "Right", "Next", "NextPanel", "GoNext", "Advance");
+        return true;
+    }
+
+    private bool TryPanelLeft()
+    {
+        if (panelManager == null) return false;
+        TryInvokeMany(panelManager, "OnLeft", "Left", "Prev", "Previous", "PrevPanel", "GoPrev", "Back");
+        return true;
+    }
+
+    private void TryLoadNextPageFromFlow()
+    {
+        string next = FindSceneNameFromFlowField("nextScene");
+        if (!string.IsNullOrEmpty(next)) SceneManager.LoadScene(next);
+    }
+
+    private void TryLoadPrevPageFromFlow()
+    {
+        string prev = FindSceneNameFromFlowField("previousScene", "prevScene", "backScene");
+        if (!string.IsNullOrEmpty(prev)) SceneManager.LoadScene(prev);
+    }
+
+    private string FindSceneNameFromFlowField(params string[] fieldNames)
+    {
+        var all = Resources.FindObjectsOfTypeAll<MonoBehaviour>();
+        foreach (var m in all)
+        {
+            if (!m) continue;
+            var go = m.gameObject;
+            if (!go.scene.IsValid() || !go.scene.isLoaded) continue;
+
+            string tn = m.GetType().Name;
+            bool looksFlow =
+                tn.IndexOf("PageFlow", StringComparison.InvariantCultureIgnoreCase) >= 0 ||
+                tn.IndexOf("Flow", StringComparison.InvariantCultureIgnoreCase) >= 0 ||
+                tn.IndexOf("Navigator", StringComparison.InvariantCultureIgnoreCase) >= 0 ||
+                tn.IndexOf("GoToNextPage", StringComparison.InvariantCultureIgnoreCase) >= 0 ||
+                tn.IndexOf("GoToPrevPage", StringComparison.InvariantCultureIgnoreCase) >= 0;
+
+            if (!looksFlow) continue;
+
+            foreach (var fname in fieldNames)
+            {
+                var f = m.GetType().GetField(fname, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (f != null)
+                {
+                    var v = f.GetValue(m) as string;
+                    if (!string.IsNullOrEmpty(v)) return v;
+                }
+                var p = m.GetType().GetProperty(fname, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (p != null && p.PropertyType == typeof(string))
+                {
+                    var v = p.GetValue(m) as string;
+                    if (!string.IsNullOrEmpty(v)) return v;
+                }
+            }
+        }
+        return null;
     }
 }
