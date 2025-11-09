@@ -5,37 +5,31 @@ using System.Collections;
 
 public class SquirrelMiniGame : MonoBehaviour
 {
-    [Header("References")]
     public Rigidbody2D playerRb;
     public Transform branchPivot;
     public Rigidbody2D beehiveRb;
     public TextMeshProUGUI messageText;
 
-    [Header("Jump Settings")]
     public float jumpForce = 5f;
     public LayerMask groundLayer;
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
 
-    [Header("Rhythm Settings")]
     public float minJumpInterval = 0.4f;
     public float maxJumpInterval = 1.2f;
     public float branchShakeAmount = 5f;
     public float shakeDuration = 0.2f;
     public float requiredPerfectTime = 5f;
 
-    [Header("Beehive Sprites")]
     public SpriteRenderer hiveSprite;
     public Sprite hiveNormalSprite;
     public Sprite hiveFallSprite;
 
     public float successFlashDuration = 0.12f;
 
-    [Header("Help (Toggle with H)")]
-    [SerializeField] private GameObject helpPanel;         // Assign a full-screen Panel under your Canvas
+    [SerializeField] private GameObject helpPanel;        
     [SerializeField] private bool helpStartsVisible = true;
 
-    // --------------- Private state ---------------
     private bool isGrounded;
     private float lastJumpTime;
     private float perfectRhythmTimer;
@@ -57,43 +51,35 @@ public class SquirrelMiniGame : MonoBehaviour
     public WinText wt;
     public ScoreTextFeedback scoreFeedback;
 
-    [Header("Rhythm Feedback")]
-    public ScoreTextFeedback messageFx;           // drag the ScoreTextFeedback on your messageText
-    public Color exhaustedFlash = new Color32(220, 60, 60, 255);   // red
-    public Color effortFlash = new Color32(255, 210, 70, 255);  // amber
-    public Color perfectFlash = new Color32(80, 220, 120, 255);  // green
+    public ScoreTextFeedback messageFx;       
+    public Color exhaustedFlash = new Color32(220, 60, 60, 255);   
+    public Color effortFlash = new Color32(255, 210, 70, 255);  
+    public Color perfectFlash = new Color32(80, 220, 120, 255); 
     public float exhaustedScale = 1.05f;
     public float effortScale = 1.10f;
     public float perfectScale = 1.20f;
 
-    // --------------- Unity ---------------
     void Start()
     {
-        // Setup beehive and UI
         beehiveRb.bodyType = RigidbodyType2D.Kinematic;
         perfectRhythmTimer = 0f;
         if (messageText != null) messageText.text = "Jump to shake the beehive!";
         branchOriginalRotation = branchPivot.localRotation;
 
-        // Initialize help panel (starts visible)
         if (helpPanel != null) helpPanel.SetActive(helpStartsVisible);
     }
 
     void Update()
     {
-        // --- Help toggle ---
         if (Input.GetKeyDown(KeyCode.H))
         {
             ToggleHelpPanel();
         }
-        //if (helpPanel.activeInHierarchy == true) return;
 
         if (gameWon) return;
 
-        // Ground check & input
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        // Keyboard input: Space → same behaviour as glove fist
         if (Input.GetKeyDown(KeyCode.Space))
         {
             TryJump();
@@ -105,7 +91,6 @@ public class SquirrelMiniGame : MonoBehaviour
         }
     }
 
-    // --------------- Help control ---------------
     private void ToggleHelpPanel()
     {
         if (helpPanel == null) return;
@@ -114,11 +99,6 @@ public class SquirrelMiniGame : MonoBehaviour
         helpPanel.SetActive(next);
     }
 
-    // --------------- External glove input ---------------
-    /// <summary>
-    /// Called by the glove script when a fist is detected.
-    /// Mirrors pressing Space (only jumps if grounded).
-    /// </summary>
     public void OnFist()
     {
         if (gameWon) return;
@@ -126,7 +106,6 @@ public class SquirrelMiniGame : MonoBehaviour
         TryJump();
     }
 
-    // --------------- Gameplay ---------------
     private void TryJump()
     {
         if (!isGrounded) return;
@@ -134,7 +113,6 @@ public class SquirrelMiniGame : MonoBehaviour
         float interval = Time.time - lastJumpTime;
         lastJumpTime = Time.time;
 
-        // Apply jump
         playerRb.velocity = new Vector2(playerRb.velocity.x, 0f);
         playerRb.AddForce(Vector2.up * jumpForce, ForceMode2D.Impulse);
         TriggerJumpFlash();

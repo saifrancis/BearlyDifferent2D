@@ -37,7 +37,7 @@ public class BeehiveMiniGame1 : MonoBehaviour
     private Coroutine hiveFlashRoutine;
 
     [Header("Help (Toggle with H)")]
-    [SerializeField] private GameObject helpPanel;       // Assign a full-screen UI Panel under your Canvas
+    [SerializeField] private GameObject helpPanel;      
     [SerializeField] private bool helpStartsVisible = true;
 
     public ScoreTextFeedback scoreFeedback;
@@ -52,7 +52,6 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
     void Start()
     {
-        // Setup beehive
         beehiveRb = beehive.GetComponent<Rigidbody2D>();
         if (beehiveRb == null) Debug.LogError("Beehive needs Rigidbody2D!");
 
@@ -60,7 +59,6 @@ public class BeehiveMiniGame1 : MonoBehaviour
         startPosition = beehive.position;
         UpdateHitsText();
 
-        // Initialize help panel (starts active)
         if (helpPanel != null)
         {
             helpPanel.SetActive(helpStartsVisible);
@@ -69,15 +67,11 @@ public class BeehiveMiniGame1 : MonoBehaviour
 
     void Update()
     {
-        // --- Handle Help toggle ---
         if (Input.GetKeyDown(KeyCode.H))
         {
             ToggleHelpPanel();
         }
 
-        //if (helpPanel.activeInHierarchy == true) return;
-
-        // --- Normal gameplay ---
         if (!isFalling)
         {
             SwingBeehive();
@@ -95,14 +89,12 @@ public class BeehiveMiniGame1 : MonoBehaviour
         }
     }
 
-    // ===== Help control =====
     private void ToggleHelpPanel()
     {
         if (helpPanel == null) return;
         helpPanel.SetActive(!helpPanel.activeSelf);
     }
 
-    // ===== Game logic =====
     void SwingBeehive()
     {
         float xOffset = Mathf.Sin(Time.time * swingSpeed) * swingAmplitude;
@@ -153,7 +145,6 @@ public class BeehiveMiniGame1 : MonoBehaviour
             scoreFeedback.Play();
     }
 
-    // Called by glove “fist” action
     public void OnFist()
     {
         TryRegisterHit();

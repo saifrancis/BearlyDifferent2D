@@ -65,12 +65,10 @@ public class GridManager : MonoBehaviour
         b.SetType(tempType, tempSprite);
     }
 
-    // --- Detect all match groups (3 or more) ---
     public List<List<Berry>> FindMatchGroups()
     {
         var groups = new List<List<Berry>>();
 
-        // Horizontal runs
         for (int r = 0; r < rows; r++)
         {
             int runType = -1, runStart = 0, runLen = 0;
@@ -95,7 +93,6 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        // Vertical runs
         for (int c = 0; c < cols; c++)
         {
             int runType = -1, runStart = 0, runLen = 0;
@@ -143,7 +140,7 @@ public class GridManager : MonoBehaviour
             {
                 outline.enabled = true;
                 outline.effectColor = color;
-                outline.effectDistance = new Vector2(6f, -5f); // thicker outline
+                outline.effectDistance = new Vector2(6f, -5f); 
                 outlines.Add(outline);
             }
         }

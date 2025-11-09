@@ -1,11 +1,10 @@
-// PlayerController.cs
 using System.Collections;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
     public Transform[] zones;
-    private int currentZone = 0; // start at zone 1 (index 0)
+    private int currentZone = 0; 
     public SpriteRenderer boSprite;
     public Sprite normalSprite;
     public Sprite biteFlashSprite;
@@ -15,12 +14,10 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Number keys to snap to zones
         if (Input.GetKeyDown(KeyCode.Alpha1)) { currentZone = 0; MoveToZone(); }
         else if (Input.GetKeyDown(KeyCode.Alpha2)) { currentZone = 1; MoveToZone(); }
         else if (Input.GetKeyDown(KeyCode.Alpha3)) { currentZone = 2; MoveToZone(); }
 
-        // Space to catch and bite flash
         if (Input.GetKeyDown(KeyCode.Space))
         {
             TryCatchLeaf();
@@ -28,7 +25,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Called by UnifiedGloveController on shake
     public void OnShake()
     {
         TryCatchLeaf();
@@ -47,7 +43,6 @@ public class PlayerController : MonoBehaviour
         if (zones == null || zones.Length == 0) return;
         currentZone = Mathf.Clamp(currentZone, 0, zones.Length - 1);
 
-        // small circle at current zone
         Collider2D[] hits = Physics2D.OverlapCircleAll(zones[currentZone].position, 0.5f);
         foreach (Collider2D hit in hits)
         {
