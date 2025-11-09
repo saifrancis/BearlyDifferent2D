@@ -6,7 +6,6 @@ using UnityEngine.SceneManagement;
 
 public class SliderManager : MonoBehaviour
 {
-    [Header("Board Setup")]
     [SerializeField] private Transform gameTransform;
     [SerializeField] private Transform piecePrefab;
 
@@ -18,39 +17,30 @@ public class SliderManager : MonoBehaviour
     private Color originalColor = Color.white;
     private Color highlightColor = Color.red;
 
-    [Header("UI")]
     [SerializeField] private TextMeshProUGUI messageText;
 
-    [Header("Help Panel")]
-    [SerializeField] private GameObject helpPanel;          // Assign in Inspector
-    [SerializeField] private bool helpStartsVisible = true; // Panel starts active
+    [SerializeField] private GameObject helpPanel;          
+    [SerializeField] private bool helpStartsVisible = true; 
 
-    // Target layout (using 0-based piece indices; 8 = blank)
-    // Grid indices: 0 1 2 / 3 4 5 / 6 7 8
-    // Desired grid: 4 1 3 / 7 2 5 / B 8 6
-    // Convert to 0-based piece indices: 3 0 2 / 6 1 4 / 8 7 5
     private readonly int[] targetLayout = new int[] { 3, 0, 2, 6, 1, 4, 8, 7, 5 };
 
-    // ---------- Unity ----------
 
     public UnityEngine.UI.Image BGSprite;
     public Sprite ColourSprite;
 
-    [Header("Solve VFX")]
-    [SerializeField] private ParticleSystem solveVFXPrefab; // assign a prefab in Inspector
-    [SerializeField] private float vfxScaleMultiplier = 1.1f; // ring size vs puzzle
+    [SerializeField] private ParticleSystem solveVFXPrefab; 
+    [SerializeField] private float vfxScaleMultiplier = 1.1f; 
     [SerializeField] private string vfxSortingLayer = "Effects";
     [SerializeField] private int vfxSortingOrder = 50;
 
     public WinText wt;
 
-    [Header("Solve Animation")]
-    [SerializeField] private Vector3 solvedTargetPosition = new Vector3(0f, -2.5f, 0f); // world-space target
-    [SerializeField] private float solvedTargetScale = 0.5f;                              // 1 = no change
-    [SerializeField] private float solveMoveDuration = 0.8f;                              // seconds
+    [SerializeField] private Vector3 solvedTargetPosition = new Vector3(0f, -2.5f, 0f); 
+    [SerializeField] private float solvedTargetScale = 0.5f;                              
+    [SerializeField] private float solveMoveDuration = 0.8f;                            
     [SerializeField]
     private AnimationCurve solveEase =
-    AnimationCurve.EaseInOut(0f, 0f, 1f, 1f); // easing for move/scale
+    AnimationCurve.EaseInOut(0f, 0f, 1f, 1f); 
 
     bool startShow = true;
     bool allowMove = false;
@@ -61,7 +51,6 @@ public class SliderManager : MonoBehaviour
         size = 3;
         CreateGamePieces(0.01f);
 
-        // Help panel starts active (no pause)
         if (helpPanel != null)
             helpPanel.SetActive(helpStartsVisible);
 
@@ -69,7 +58,6 @@ public class SliderManager : MonoBehaviour
 
     void Update()
     {
-        // Toggle help with H
         if (Input.GetKeyDown(KeyCode.H))
         {
             ToggleHelpPanel();
@@ -79,7 +67,6 @@ public class SliderManager : MonoBehaviour
 
         if (startShow)
         {
-            // Start solved, show full image briefly, then apply target layout
             StartCoroutine(ShowSolvedThenApplyTarget());
             startShow = false;
         }
@@ -89,7 +76,6 @@ public class SliderManager : MonoBehaviour
         HandleArrowKeys();
         HandleSpacebar();
 
-        // Reset to the same fixed layout when pressing R
         if (Input.GetKeyDown(KeyCode.R))
         {
             ApplyTargetLayout();
@@ -97,14 +83,12 @@ public class SliderManager : MonoBehaviour
         }
     }
 
-    // ---------- Help ----------
     private void ToggleHelpPanel()
     {
         if (helpPanel == null) return;
         helpPanel.SetActive(!helpPanel.activeSelf);
     }
 
-    // ---------- Board / Pieces ----------
     private void CreateGamePieces(float gapThickness)
     {
         float width = 1 / (float)size;
@@ -124,7 +108,6 @@ public class SliderManager : MonoBehaviour
                 if (piece.TryGetComponent<SpriteRenderer>(out SpriteRenderer sr))
                     sr.color = originalColor;
 
-                // Hide the last piece (blank) in solved state
                 if (row == size - 1 && col == size - 1)
                 {
                     emptyLocation = index;
@@ -164,44 +147,38 @@ public class SliderManager : MonoBehaviour
 
     private IEnumerator ShowSolvedThenApplyTarget()
     {
-        // Ensure solved positions
         for (int i = 0; i < pieces.Count; i++)
             pieces[i].localPosition = IndexToLocalPosition(i);
 
-        emptyLocation = (size * size) - 1; // blank at index 8 in solved
+        emptyLocation = (size * size) - 1; 
         selectedIndex = 0;
         HighlightSelectedPiece();
 
-        // Show solved image for 3 seconds
         yield return new WaitForSeconds(3f);
 
-        // Apply fixed shuffled layout
         ApplyTargetLayout();
         allowMove = !helpPanel || !helpPanel.activeInHierarchy; ;
     }
 
     private void ApplyTargetLayout()
     {
-        // Build a new ordering so slot i gets tile targetLayout[i]
         List<Transform> reordered = new List<Transform>(new Transform[size * size]);
         for (int slot = 0; slot < targetLayout.Length; slot++)
         {
-            int tileIndex = targetLayout[slot]; // which tile should go in this slot
+            int tileIndex = targetLayout[slot]; 
             reordered[slot] = pieces[tileIndex];
         }
 
         pieces = reordered;
 
-        // Reposition and find the blank
         emptyLocation = -1;
         for (int i = 0; i < pieces.Count; i++)
         {
             pieces[i].localPosition = IndexToLocalPosition(i);
-            if (!pieces[i].gameObject.activeSelf) // the blank is inactive
+            if (!pieces[i].gameObject.activeSelf) 
                 emptyLocation = i;
         }
 
-        // Safety fallback
         if (emptyLocation == -1)
         {
             for (int i = 0; i < targetLayout.Length; i++)
@@ -215,7 +192,6 @@ public class SliderManager : MonoBehaviour
         Debug.Log("Applied fixed target layout.");
     }
 
-    // ---------- Input / Selection ----------
     private void HandleArrowKeys()
     {
         int previousIndex = selectedIndex;
@@ -310,7 +286,6 @@ public class SliderManager : MonoBehaviour
         if (messageText) messageText.text = "";
     }
 
-    // ---------- Glove API ----------
     public void GloveMoveLeft()
     {
         int previous = selectedIndex;
@@ -339,7 +314,7 @@ public class SliderManager : MonoBehaviour
         if (previous != selectedIndex) HighlightSelectedPiece();
     }
 
-    public void GloveSelect() // same as pressing Space
+    public void GloveSelect() 
     {
         if (IsAdjacent(selectedIndex, emptyLocation))
         {
@@ -354,14 +329,13 @@ public class SliderManager : MonoBehaviour
 
     private Bounds CalculatePuzzleBounds()
     {
-        // Find world-space bounds of all visible tiles
         var bounds = new Bounds(gameTransform.position, Vector3.zero);
         bool hasAny = false;
 
         for (int i = 0; i < pieces.Count; i++)
         {
             var go = pieces[i].gameObject;
-            if (!go.activeInHierarchy) continue; // skip the hidden blank
+            if (!go.activeInHierarchy) continue;
             var r = go.GetComponent<Renderer>();
             if (r == null) continue;
 
@@ -369,7 +343,7 @@ public class SliderManager : MonoBehaviour
             else bounds.Encapsulate(r.bounds);
         }
 
-        if (!hasAny) bounds = new Bounds(gameTransform.position, Vector3.one * 2f); // fallback around board
+        if (!hasAny) bounds = new Bounds(gameTransform.position, Vector3.one * 2f); 
         return bounds;
     }
 
@@ -380,9 +354,7 @@ public class SliderManager : MonoBehaviour
         var b = CalculatePuzzleBounds();
         var ps = Instantiate(solveVFXPrefab, b.center, Quaternion.identity);
 
-        // Try to size the effect to ring the puzzle
         float radius = Mathf.Max(b.extents.x, b.extents.y) * vfxScaleMultiplier;
-        // If your prefab uses ParticleSystem shape, we can adjust it:
         var shape = ps.shape;
         shape.enabled = true;
         if (shape.shapeType == ParticleSystemShapeType.Circle ||
@@ -392,11 +364,9 @@ public class SliderManager : MonoBehaviour
         }
         else
         {
-            // Fallback: scale transform (works if prefab is authored to scale)
             ps.transform.localScale = Vector3.one * (radius * 1.0f);
         }
 
-        // Ensure it renders above the board in 2D
         var r = ps.GetComponent<Renderer>();
         if (r)
         {
@@ -404,7 +374,6 @@ public class SliderManager : MonoBehaviour
             r.sortingOrder = vfxSortingOrder;
         }
 
-        // Auto-destroy when finished
         var main = ps.main;
         main.stopAction = ParticleSystemStopAction.Destroy;
 

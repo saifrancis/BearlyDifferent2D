@@ -10,7 +10,7 @@ public class BeehiveMiniGame3 : MonoBehaviour
     public bool canSpawn = true;
 
     [Header("Help Panel")]
-    [SerializeField] private GameObject helpPanel;      // Assign your help panel in the Inspector
+    [SerializeField] private GameObject helpPanel;     
     [SerializeField] private bool helpStartsVisible = true;
 
 
@@ -18,22 +18,17 @@ public class BeehiveMiniGame3 : MonoBehaviour
 
     void Start()
     {
-        // Initialize the help panel
         if (helpPanel != null)
             helpPanel.SetActive(helpStartsVisible);
     }
 
     void Update()
     {
-        // --- Handle help toggle ---
         if (Input.GetKeyDown(KeyCode.H))
         {
             ToggleHelpPanel();
         }
 
-        //if (helpPanel.activeInHierarchy == true) return;
-
-        // --- Gameplay logic ---
         if (canSpawn && Input.GetKeyDown(KeyCode.Space))
         {
             SpawnRock();

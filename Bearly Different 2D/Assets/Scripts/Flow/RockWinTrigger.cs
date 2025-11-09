@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using System.Collections;
-using TMPro;  // ✅ Needed for TextMeshPro support
+using TMPro; 
 
 public class RockWinTrigger : MonoBehaviour
 {
@@ -10,7 +10,7 @@ public class RockWinTrigger : MonoBehaviour
     public float delayBeforeLoad = 5f;
 
     [Header("UI Message")]
-    public TextMeshProUGUI winMessage;   // ✅ Assign your TMP text in the Inspector
+    public TextMeshProUGUI winMessage;  
     public string winText = "You reached the target!";
 
     private bool gameWon = false;
@@ -18,7 +18,7 @@ public class RockWinTrigger : MonoBehaviour
     public WinText wt;
 
     [Header("Rock Vanish (simple)")]
-    public float rockFadeTime = 0.25f; // quarter-second fade
+    public float rockFadeTime = 0.25f; 
 
     public ScoreTextFeedback scoreFeedback;
 
@@ -31,7 +31,6 @@ public class RockWinTrigger : MonoBehaviour
             gameWon = true;
             Debug.Log("Player won! Rocks landed.");
 
-            // ✅ Disable spawner so no more rocks spawn
             BeehiveMiniGame3 spawner = FindObjectOfType<BeehiveMiniGame3>();
             if (spawner != null)
             {
@@ -42,7 +41,6 @@ public class RockWinTrigger : MonoBehaviour
             foreach (var r in rocks)
                 StartCoroutine(FadeAndDestroy(r));
 
-            // ✅ Display win message on screen
             if (winMessage != null)
             {
                 winMessage.text = winText;
@@ -53,7 +51,6 @@ public class RockWinTrigger : MonoBehaviour
 
             wt.PlayWin();   
 
-            // ✅ Load next scene after delay
             StartCoroutine(LoadNextSceneAfterDelay());
         }
     }
@@ -68,7 +65,6 @@ public class RockWinTrigger : MonoBehaviour
     {
         if (go == null) yield break;
 
-        // (optional) freeze physics/collisions so they stop moving during fade
         var rb = go.GetComponent<Rigidbody2D>();
         if (rb) rb.simulated = false;
         var col = go.GetComponent<Collider2D>();
@@ -86,11 +82,9 @@ public class RockWinTrigger : MonoBehaviour
             t += Time.deltaTime;
             float k = t / dur;
 
-            // fade alpha
             c.a = 1f - k;
             sr.color = c;
 
-            // (optional) tiny shrink for niceness
             go.transform.localScale = Vector3.Lerp(startScale, startScale * 0.85f, k);
 
             yield return null;
