@@ -15,11 +15,11 @@ public class FishManager : MonoBehaviour
     public TextMeshProUGUI scoreText;
 
     [Header("Help Panel")]
-    [SerializeField] private GameObject helpPanel;          // Assign in Inspector (full-screen panel or any UI)
-    [SerializeField] private bool helpStartsVisible = true; // Starts active
+    [SerializeField] private GameObject helpPanel;         
+    [SerializeField] private bool helpStartsVisible = true; 
 
     private int score = 0;
-    private int targetScore = 5; // Number of leaves needed to win
+    private int targetScore = 5; 
 
     public WinText wt;
     public ScoreTextFeedback scoreFeedback;
@@ -34,24 +34,20 @@ public class FishManager : MonoBehaviour
 
     void Start()
     {
-        // Init UI
         UpdateScoreUI();
 
-        // Init help panel (no pause)
         if (helpPanel != null)
         {
             helpPanel.SetActive(helpStartsVisible);
-            //Time.timeScale = 0f;
+         
         }
 
-        // Start spawning leaves
         InvokeRepeating(nameof(SpawnLeaf), 1f, spawnInterval);
 
     }
 
     void Update()
     {
-        // Toggle help on H (no pause)
         if (Input.GetKeyDown(KeyCode.H))
         {
             ToggleHelpPanel();
@@ -63,10 +59,6 @@ public class FishManager : MonoBehaviour
         if (helpPanel == null) return;
         helpPanel.SetActive(!helpPanel.activeSelf);
 
-       /* if (helpPanel.activeInHierarchy)
-            Time.timeScale = 0f;
-        else
-            Time.timeScale = 1f;*/
     }
 
     void SpawnLeaf()
@@ -79,7 +71,7 @@ public class FishManager : MonoBehaviour
         GameObject leaf = Instantiate(leafPrefab, spawnPoint.position, Quaternion.identity);
         var rb = leaf.GetComponent<Rigidbody2D>();
         if (rb != null)
-            rb.gravityScale = Random.Range(0.2f, 0.5f); // random fall speed
+            rb.gravityScale = Random.Range(0.2f, 0.5f); 
     }
 
     public void CaughtLeaf(Leaf leaf)
@@ -104,7 +96,6 @@ public class FishManager : MonoBehaviour
         if (scoreFeedback != null)
             scoreFeedback.Play();
 
-        // Check win condition
         if (score >= targetScore)
         {
             scoreText.text = "YOU WIN!";

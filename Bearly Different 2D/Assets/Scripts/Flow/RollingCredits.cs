@@ -6,37 +6,20 @@ using UnityEngine.SceneManagement;
 
 public class RollingCredits : MonoBehaviour
 {
-    [Header("UI References")]
-    [Tooltip("A RectTransform that acts as the masked viewport (e.g., a Panel with an Image + Mask).")]
     public RectTransform viewport;
-
-    [Tooltip("A RectTransform that will contain the generated credit items and be scrolled upward.")]
     public RectTransform content;
 
-    [Header("Scroll Settings")]
-    [Tooltip("Pixels per second upward.")]
     public float scrollSpeed = 60f;
-
-    [Tooltip("Seconds to wait after credits fully exit the top before loading the home scene.")]
     public float waitAtEndSeconds = 3f;
-
-    [Tooltip("Name of the scene to load when credits are done.")]
     public string homeSceneName = "0HomePage";
-
-    [Header("Typography")]
     public TMP_FontAsset font;
-    [Tooltip("Role/title font size (bold).")]
     public int roleFontSize = 48;
-    [Tooltip("Name line font size.")]
     public int nameFontSize = 34;
 
-    [Tooltip("Extra spacing (px) after a role block.")]
     public float blockBottomSpacing = 30f;
 
-    [Tooltip("Line spacing between names (px).")]
     public float nameLineSpacing = 8f;
 
-    [Header("Data — Roles & Names")]
     public List<RoleBlock> teamCredits = new List<RoleBlock>()
     {
         new RoleBlock("Game Designers", new [] { "Eden Neave", "Amy Janse van Vuuren", "Saiyuri Francis" }),
@@ -47,23 +30,20 @@ public class RollingCredits : MonoBehaviour
         new RoleBlock("Voice Actors", new [] { "Angelica Johnston", "Zoe Phike", "Andiswa Gasa", "Katelyn Forbay" }),
     };
 
-    [Header("Data — Special Thanks")]
     public string specialThanksTitle = "Special Thanks To";
     public List<string> specialThanksNames = new List<string>()
     {
         "Ann Harding Cheshire Home", "Abdul-Khaaliq Mohamed", 
     };
 
-    [Header("Data — Follow Us")]
     public string followUsTitle = "Follow Us";
     public List<string> followUsLines = new List<string>()
     {
         "Instagram: @bearlydifferent_",
     };
 
-    // internal
     private bool _startedScrolling;
-    private float _targetScrollY;  // content needs to move from startY to targetY
+    private float _targetScrollY; 
     private VerticalLayoutGroup _layout;
     private ContentSizeFitter _fitter;
 
@@ -92,7 +72,6 @@ public class RollingCredits : MonoBehaviour
             return;
         }
 
-        // Ensure layout components exist on content
         _layout = content.GetComponent<VerticalLayoutGroup>();
         if (_layout == null)
             _layout = content.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -109,11 +88,10 @@ public class RollingCredits : MonoBehaviour
         _fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         _fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-        // Ensure viewport masks (so credits scroll out of bounds cleanly)
         var mask = viewport.GetComponent<Mask>();
         var img = viewport.GetComponent<Image>();
         if (img == null) img = viewport.gameObject.AddComponent<Image>();
-        img.color = new Color(0, 0, 0, 0); // transparent mask
+        img.color = new Color(0, 0, 0, 0); 
         if (mask == null) mask = viewport.gameObject.AddComponent<Mask>();
         mask.showMaskGraphic = false;
     }
@@ -123,12 +101,10 @@ public class RollingCredits : MonoBehaviour
         BuildCredits();
         LayoutRebuilder.ForceRebuildLayoutImmediate(content);
 
-        // Place content just below the bottom of the viewport so it scrolls up through center.
         Vector2 start = content.anchoredPosition;
-        start.y = -viewport.rect.height * 0.5f - content.rect.height * 0.5f; // start fully below
+        start.y = -viewport.rect.height * 0.5f - content.rect.height * 0.5f; 
         content.anchoredPosition = start;
 
-        // Target is fully above the top
         _targetScrollY = viewport.rect.height * 0.5f + content.rect.height * 0.5f;
 
         _startedScrolling = true;
@@ -158,37 +134,29 @@ public class RollingCredits : MonoBehaviour
             Debug.LogWarning("RollingCredits: homeSceneName not set.");
     }
 
-    // ---------- Build ----------
     private void BuildCredits()
     {
-        // Clear any existing children
         for (int i = content.childCount - 1; i >= 0; i--)
             Destroy(content.GetChild(i).gameObject);
 
-        // Top spacer
         AddSpacer(80f);
 
-        // Team role blocks
         foreach (var block in teamCredits)
         {
             AddRoleBlock(block.role, block.names);
         }
 
-        // Section: Special Thanks
         AddSpacer(40f);
         AddTitle(specialThanksTitle);
         AddNames(specialThanksNames);
 
-        // Section: Follow Us
         AddSpacer(40f);
         AddTitle(followUsTitle);
         AddNames(followUsLines);
 
-        // Bottom spacer
         AddSpacer(80f);
     }
 
-    // ---------- Helpers ----------
     private void AddRoleBlock(string role, List<string> names)
     {
         AddTitle(role);

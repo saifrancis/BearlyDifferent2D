@@ -23,7 +23,6 @@ public class AudioManager : MonoBehaviour
     [Range(0f, 1f)] public float gameVolumeB = 1f;
     [SerializeField] private float crossfadeSeconds = 2f;
 
-    // We keep two pairs so we can crossfade without stopping audio
     private AudioSource[] currentPair = new AudioSource[2];
     private AudioSource[] standbyPair = new AudioSource[2];
 
@@ -33,12 +32,10 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
-        // Singleton
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
-        // Build 4 audio sources (2 active + 2 standby for crossfades)
         currentPair[0] = CreateSource("Current_A");
         currentPair[1] = CreateSource("Current_B");
         standbyPair[0] = CreateSource("Standby_A");
@@ -49,7 +46,6 @@ public class AudioManager : MonoBehaviour
 
     void Start()
     {
-        // Start appropriate pair for the initial scene (no fade on first start)
         var startScene = SceneManager.GetActiveScene().name;
         if (startScene == homeSceneName) PlayImmediateHome();
         else PlayImmediateGame();
@@ -69,13 +65,12 @@ public class AudioManager : MonoBehaviour
         var src = go.AddComponent<AudioSource>();
         src.playOnAwake = false;
         src.loop = true;
-        src.spatialBlend = 0f; // 2D
+        src.spatialBlend = 0f; 
         return src;
     }
 
     private void OnSceneChanged(Scene prev, Scene next)
     {
-        // Decide which pair should be active based on scene name
         if (next.name == homeSceneName)
         {
             if (currentMode != Mode.Home)
@@ -88,7 +83,6 @@ public class AudioManager : MonoBehaviour
         }
     }
 
-    // ---- Immediate start (first scene) ----
     private void PlayImmediateHome()
     {
         SetClipsAndPlay(currentPair, homeTrackA, homeTrackB, homeVolumeA, homeVolumeB);
@@ -103,10 +97,8 @@ public class AudioManager : MonoBehaviour
         currentMode = Mode.Game;
     }
 
-    // ---- Crossfade between pairs ----
     private void CrossfadeTo(AudioClip clipA, AudioClip clipB, float volA, float volB, Mode newMode)
     {
-        // If first time and not initialized, start immediately (safety)
         if (!initialized)
         {
             SetClipsAndPlay(currentPair, clipA, clipB, volA, volB);
@@ -114,7 +106,6 @@ public class AudioManager : MonoBehaviour
             return;
         }
 
-        // Prep standby with target clips at zero volume
         SetClipsAndPlay(standbyPair, clipA, clipB, 0f, 0f);
         StopAllCoroutines();
         StartCoroutine(CrossfadeRoutine(volA, volB, newMode));
@@ -125,27 +116,23 @@ public class AudioManager : MonoBehaviour
         float t = 0f;
         float dur = Mathf.Max(0.01f, crossfadeSeconds);
 
-        // Capture starting volumes
         float startCurA = currentPair[0].volume;
         float startCurB = currentPair[1].volume;
 
         while (t < dur)
         {
-            t += Time.unscaledDeltaTime; // unaffected by game pause
+            t += Time.unscaledDeltaTime; 
             float k = Mathf.Clamp01(t / dur);
 
-            // Fade out current
             currentPair[0].volume = Mathf.Lerp(startCurA, 0f, k);
             currentPair[1].volume = Mathf.Lerp(startCurB, 0f, k);
 
-            // Fade in standby
             standbyPair[0].volume = Mathf.Lerp(0f, targetA, k);
             standbyPair[1].volume = Mathf.Lerp(0f, targetB, k);
 
             yield return null;
         }
 
-        // Swap pairs: standby becomes current; stop old sources
         SwapPairs();
 
         currentMode = newMode;
@@ -153,11 +140,9 @@ public class AudioManager : MonoBehaviour
 
     private void SwapPairs()
     {
-        // Stop the old current (now faded out)
         currentPair[0].Stop();
         currentPair[1].Stop();
 
-        // Swap arrays
         var tmp = currentPair;
         currentPair = standbyPair;
         standbyPair = tmp;
