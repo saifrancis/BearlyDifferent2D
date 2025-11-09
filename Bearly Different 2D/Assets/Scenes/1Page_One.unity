@@ -980,7 +980,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &805929743
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1989,6 +1989,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da4756776e9c4b245b5531db6eb44956, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  preferredPortName: COM3
+  preferredBaud: 9600
+  expectsCsv: 0
+  neutralTpl: {x: 1.05, y: 1.9, z: 10.21}
+  downTpl: {x: 10.37, y: 0.24, z: 1.92}
+  leftTpl: {x: 1.22, y: 10.36, z: 3.53}
+  rightTpl: {x: -1.53, y: -9.02, z: 0.16}
+  upTpl: {x: -9.53, y: 2.12, z: 1.73}
+  tolerance: 4
+  alpha: 0.35
+  dwellTime: 0.12
+  neutralRearmDwell: 0.25
+  gestureWindowSeconds: 0.6
+  choiceCooldownSeconds: 0.25
+  bendConfirmCount: 2
+  straightBaseline: f200000002010000e5000000120100000a010000
+  bentDelta: 180
+  straightDelta: 40
+  fistWindowSeconds: 1.5
+  fistCooldownSeconds: 0.75
+  miniGame4FistWindowSeconds: 1.25
+  miniGame4FistCooldownSeconds: 0.5
+  laneCooldownSeconds: 0.15
+  catchCooldownSeconds: 0.25
+  catchRadius: 0.8
+  requireLeafInCatchZone: 0
+  logPoses: 1
+  logRawSerial: 1
+  rawLogMax: 200
+  thumbsUpHoldSeconds: 0.5
+  thumbsUpCooldownSeconds: 0.75
+  invertFlexBits: 0
+  fingerOrder: 0000000001000000020000000300000004000000
+  nameHoldSeconds: 2
 --- !u!4 &1906565918
 Transform:
   m_ObjectHideFlags: 0
