@@ -820,9 +820,13 @@ MonoBehaviour:
       m_Calls: []
   sr: {fileID: 214508344}
   image: {fileID: 214508341}
+  animator: {fileID: 0}
   playNextStart: 0
   playNextEnd: 1
   panelManager: {fileID: 1166599240}
+  enableShrink: 0
+  shrinkSpeed: 1
+  minScale: 0.1
 --- !u!114 &214508341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1528,9 +1532,13 @@ MonoBehaviour:
       m_Calls: []
   sr: {fileID: 0}
   image: {fileID: 0}
+  animator: {fileID: 0}
   playNextStart: 1
   playNextEnd: 0
   panelManager: {fileID: 1166599240}
+  enableShrink: 0
+  shrinkSpeed: 1
+  minScale: 0.1
 --- !u!1 &971485702
 GameObject:
   m_ObjectHideFlags: 0
@@ -1934,7 +1942,7 @@ MonoBehaviour:
   - {fileID: 2006479786}
   fadeDuration: 1
   nextSceneName: 3Page_Three
-  waitBeforeSceneLoad: 2
+  waitBeforeSceneLoad: 5
   useChoiceOnLastPanel: 0
   choice1Scene: MiniGame_2.1
   choice2Scene: MiniGame_2.2
