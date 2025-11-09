@@ -10,8 +10,8 @@ public class PanelManager : MonoBehaviour
     public float fadeDuration = 1f;
     private int currentIndex = -1;
 
-    public string nextSceneName;            
-    public float waitBeforeSceneLoad = 2f;  
+    public string nextSceneName;
+    public float waitBeforeSceneLoad = 2f;
     private bool isLoadingNextScene = false;
 
     public bool useChoiceOnLastPanel = false;
@@ -22,33 +22,42 @@ public class PanelManager : MonoBehaviour
 
     public bool useGrowOnLastPanel = false;
     public GameObject panelToDeactivateOnGrow;
+    public GameObject panelToDeactivateOnGrow2;
     public float growDuration = 1.75f;
     public float growWaitAfter = 10f;
     public Vector2 growTargetAnchoredPos = Vector2.zero;
     public Vector2 growTargetSize = new Vector2(252.1366f, 356.5933f);
 
+    [Header("Dialogue (per-panel, non-overlapping)")]
     public AudioClip[] panelVoiceClips;
-    [Range(0f, 1f)] public float voiceVolume = 1f; 
+    [Range(0f, 1f)] public float voiceVolume = 1f;
     public AudioSource voiceSource;
+
+    [Header("Home / Voice Opt-In")]
     public string homeSceneName = "0HomePage";
     public bool showVoiceOptInOnHome = true;
     public GameObject voiceOptInPanel;
     public Toggle voiceAssistToggleUI;
 
     private const string PREF_VOICE_ENABLED = "VOICE_ASSIST_ENABLED";
-    private bool voiceAssistEnabled = false;  
+    private bool voiceAssistEnabled = false;
 
+    [Header("Glove Control")]
     public bool useGloveInput = true;
     private UnifiedGloveController accRef;
 
+    [Header("Toggle Panel (press key to show/hide)")]
     public GameObject togglePanel;
     public KeyCode toggleKey = KeyCode.H;
-    public float toggleFadeDuration = 0.2f;  
+    public float toggleFadeDuration = 0.2f;
     private bool togglePanelActive = false;
     private Coroutine toggleCoroutine;
 
-    public bool transitionFromRight = true; // forward page turn default
+    [Header("Zoom Transition")]
+    public bool transitionFromRight = true; 
     public int transitionFps = 24;
+
+    public GameObject[] panelsToDeactivateOnZoom;
 
     [Serializable]
     public struct DeactivateAfterSteps
@@ -82,14 +91,16 @@ public class PanelManager : MonoBehaviour
         if (togglePanel != null)
             togglePanelActive = togglePanel.activeSelf;
 
-        currentIndex = -1;
+    
+
+    currentIndex = -1;
 
         if (voiceSource == null)
         {
             voiceSource = gameObject.AddComponent<AudioSource>();
             voiceSource.playOnAwake = false;
-            voiceSource.loop = false;       
-            voiceSource.spatialBlend = 0f;  
+            voiceSource.loop = false;
+            voiceSource.spatialBlend = 0f;
             voiceSource.volume = voiceVolume;
         }
 
@@ -120,7 +131,6 @@ public class PanelManager : MonoBehaviour
             if (voiceAssistToggleUI != null)
             {
                 voiceAssistToggleUI.isOn = voiceAssistEnabled;
-           
                 voiceAssistToggleUI.onValueChanged.AddListener(OnVoiceAssistToggled);
             }
         }
@@ -148,7 +158,7 @@ public class PanelManager : MonoBehaviour
         PlayerPrefs.Save();
 
         if (!voiceAssistEnabled)
-            StopVoice(); 
+            StopVoice();
     }
 
     public void CloseVoiceOptInPanel()
@@ -157,11 +167,10 @@ public class PanelManager : MonoBehaviour
             voiceOptInPanel.SetActive(false);
     }
 
-
     private void OnAccelPose(string pose)
     {
         if (!useGloveInput) return;
-        if (waitingForChoice) return; 
+        if (waitingForChoice) return;
         if (pose == "RIGHT")
             ShowNextPanel();
     }
@@ -169,7 +178,7 @@ public class PanelManager : MonoBehaviour
     private void OnAccelChoice(int n)
     {
         if (!useGloveInput) return;
-        if (!waitingForChoice) return; 
+        if (!waitingForChoice) return;
 
         if (n == 1) LoadSceneSafe(choice1Scene);
         else if (n == 2) LoadSceneSafe(choice2Scene);
@@ -186,7 +195,7 @@ public class PanelManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Alpha1)) LoadSceneSafe(choice1Scene);
             else if (Input.GetKeyDown(KeyCode.Alpha2)) LoadSceneSafe(choice2Scene);
             else if (Input.GetKeyDown(KeyCode.Alpha3)) LoadSceneSafe(choice3Scene);
-            return; 
+            return;
         }
 
         if (Input.GetKeyDown(KeyCode.RightArrow))
@@ -238,8 +247,8 @@ public class PanelManager : MonoBehaviour
 
     public void ShowNextPanel()
     {
-        if (isLoadingNextScene) return; 
-        if (waitingForChoice) return;  
+        if (isLoadingNextScene) return;
+        if (waitingForChoice) return;
 
         if (currentIndex < panels.Length - 1)
         {
@@ -348,6 +357,15 @@ public class PanelManager : MonoBehaviour
 
         StopVoice();
 
+        if (panelsToDeactivateOnZoom != null)
+        {
+            foreach (var p in panelsToDeactivateOnZoom)
+            {
+                if (p != null)
+                    p.SetActive(false);
+            }
+        }
+
         TransitionLoader.Go(sceneName, fromRight: transitionFromRight, fps: transitionFps);
     }
 
@@ -360,6 +378,9 @@ public class PanelManager : MonoBehaviour
 
         if (panelToDeactivateOnGrow != null)
             panelToDeactivateOnGrow.SetActive(false);
+
+        if (panelToDeactivateOnGrow2 != null)
+            panelToDeactivateOnGrow2.SetActive(false);
 
         var rts = new RectTransform[panels.Length];
         var startPos = new Vector2[panels.Length];
@@ -405,7 +426,6 @@ public class PanelManager : MonoBehaviour
         yield return new WaitForSeconds(growWaitAfter);
         LoadSceneSafe(nextSceneName);
     }
-
 
     void CheckPanelsToDeactivate()
     {
