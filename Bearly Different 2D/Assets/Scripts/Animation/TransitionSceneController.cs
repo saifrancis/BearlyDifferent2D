@@ -6,19 +6,51 @@ using UnityEngine.UI;
 public class TransitionSceneController : MonoBehaviour
 {
     [Header("UI")]
-    public Image curlImage;                       // Assign the full-screen Image
+    public Image curlImage;
 
-    [Header("Frames (pick one direction or both)")]
-    public Sprite[] framesRight;                  // Right-edge peel sequence (frame 0 -> last)
-    public Sprite[] framesLeft;                   // Left-edge peel sequence
+    [Header("Frames")]
+    public Sprite[] framesRight;
+    public Sprite[] framesLeft;
 
     [Header("Playback")]
     [Range(1, 60)] public int fps = 24;
     public bool useUnscaledTime = true;
 
-    [Header("Audio (optional)")]
-    public AudioSource sfx;                       // Optional rustle sound
-    public int playSfxAtFrame = 2;                // When to play SFX
+    [Header("Audio")]
+    public AudioClip rustleClip;            
+    [Range(0f, 1f)] public float rustleVolume = 1f;
+    public int playSfxAtFrame = 2;
+
+    public string debugFallbackNextScene = "";
+
+    AudioSource _sfx;
+
+    void Awake()
+    {
+        EnsureAudioListener();
+        EnsureAudioSource();
+    }
+
+    void EnsureAudioListener()
+    {
+        if (FindAnyObjectByType<AudioListener>() == null)
+        {
+            var go = new GameObject("TempAudioListener");
+            go.hideFlags = HideFlags.HideAndDontSave;
+            go.AddComponent<AudioListener>();
+            DontDestroyOnLoad(go);
+        }
+    }
+
+    void EnsureAudioSource()
+    {
+        _sfx = GetComponent<AudioSource>();
+        if (_sfx == null) _sfx = gameObject.AddComponent<AudioSource>();
+        _sfx.playOnAwake = false;
+        _sfx.loop = false;
+        _sfx.spatialBlend = 0f;  
+        _sfx.volume = rustleVolume;
+    }
 
     void Start()
     {
@@ -28,22 +60,20 @@ public class TransitionSceneController : MonoBehaviour
 
     IEnumerator Run()
     {
-        // Read intent from loader
-        var nextScene = TransitionLoader.NextSceneName;
+        var nextScene = !string.IsNullOrEmpty(TransitionLoader.NextSceneName)
+            ? TransitionLoader.NextSceneName
+            : debugFallbackNextScene;
+
         bool fromRight = TransitionLoader.FromRight;
         int requestedFps = TransitionLoader.RequestedFps > 0 ? TransitionLoader.RequestedFps : fps;
 
         if (string.IsNullOrEmpty(nextScene))
-        {
-            Debug.LogError("[Transition] No NextSceneName set. Returning to first scene in build.");
-            nextScene = SceneManager.GetSceneByBuildIndex(0).name;
-        }
+            yield break;
 
-        // Pick frames based on direction
+        // pick sequence
         Sprite[] seq = fromRight ? framesRight : framesLeft;
         if (seq == null || seq.Length == 0)
         {
-            // If opposite direction exists, fall back to it reversed
             var alt = fromRight ? framesLeft : framesRight;
             if (alt != null && alt.Length > 0)
             {
@@ -51,16 +81,11 @@ public class TransitionSceneController : MonoBehaviour
                 for (int i = 0; i < alt.Length; i++) seq[i] = alt[alt.Length - 1 - i];
             }
         }
-        if (seq == null || seq.Length == 0)
-        {
-            Debug.LogError("[Transition] No frames assigned.");
-            yield break;
-        }
+        if (seq == null || seq.Length == 0) yield break;
 
         float frameDur = 1f / requestedFps;
 
-        // Start loading next scene in background but hold activation until halfway
-        AsyncOperation op = SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Single);
+        var op = SceneManager.LoadSceneAsync(nextScene, LoadSceneMode.Single);
         op.allowSceneActivation = false;
 
         int half = seq.Length / 2;
@@ -69,27 +94,18 @@ public class TransitionSceneController : MonoBehaviour
         {
             curlImage.sprite = seq[i];
 
-            if (sfx && i == Mathf.Clamp(playSfxAtFrame, 0, seq.Length - 1))
-                sfx.Play();
+            if (rustleClip && i == Mathf.Clamp(playSfxAtFrame, 0, seq.Length - 1))
+                _sfx.PlayOneShot(rustleClip, rustleVolume); 
 
-            // At halfway point, allow the new scene to activate (swap underneath)
             if (i == half)
                 op.allowSceneActivation = true;
 
-            // Wait per-frame
             if (useUnscaledTime)
             {
                 float t = 0f;
                 while (t < frameDur) { t += Time.unscaledDeltaTime; yield return null; }
             }
-            else
-            {
-                yield return new WaitForSeconds(frameDur);
-            }
+            else yield return new WaitForSeconds(frameDur);
         }
-
-        // Optional: tiny wait to ensure the next scene is active
-        yield return null;
     }
 }
-

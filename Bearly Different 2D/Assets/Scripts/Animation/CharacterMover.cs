@@ -29,10 +29,10 @@ public class CharacterMover : MonoBehaviour
     int _i = 0;
     bool _running;
 
-    [Header("Render + Animation")]
+    [Header("Animation")]
     public SpriteRenderer sr;
     public UnityEngine.UI.Image image;
-    public Animator animator; // ✅ optional animator
+    public Animator animator; 
 
     public bool playNextStart;
     public bool playNextEnd;
@@ -70,7 +70,6 @@ public class CharacterMover : MonoBehaviour
                 transform.localScale = Vector3.one * minScale;
         }
 
-        // ✅ optional: keep Animator in sync
         if (animator != null)
             animator.SetBool("IsMoving", _isActuallyMoving);
     }

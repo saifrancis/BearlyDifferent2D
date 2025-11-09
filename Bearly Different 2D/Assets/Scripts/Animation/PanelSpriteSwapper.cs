@@ -19,7 +19,6 @@ public class PanelSpriteSwapper : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
 
-        // Try Image first (UI-based panel)
         var img = GetComponent<Image>();
         if (img != null)
         {
@@ -28,7 +27,6 @@ public class PanelSpriteSwapper : MonoBehaviour
             yield break;
         }
 
-        // Fallback: SpriteRenderer (if it's a world-space panel)
         var sr = GetComponent<SpriteRenderer>();
         if (sr != null)
         {
