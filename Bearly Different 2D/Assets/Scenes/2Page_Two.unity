@@ -1943,7 +1943,7 @@ MonoBehaviour:
   - {fileID: 2006479786}
   fadeDuration: 1
   nextSceneName: 3Page_Three
-  waitBeforeSceneLoad: 2
+  waitBeforeSceneLoad: 5
   useChoiceOnLastPanel: 0
   choice1Scene: MiniGame_2.1
   choice2Scene: MiniGame_2.2

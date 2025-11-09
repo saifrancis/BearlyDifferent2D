@@ -1,4 +1,3 @@
-// UnifiedGloveController.cs
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -913,7 +912,6 @@ public class UnifiedGloveController : MonoBehaviour
         playerTransform.position = p;
     }
 
-    // Leaf catch on shake plus bite flash trigger
     private void TriggerCatchFromShake()
     {
         float now = Time.time;
