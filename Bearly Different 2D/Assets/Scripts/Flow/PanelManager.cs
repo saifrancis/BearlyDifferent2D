@@ -47,6 +47,9 @@ public class PanelManager : MonoBehaviour
     private bool togglePanelActive = false;
     private Coroutine toggleCoroutine;
 
+    public bool transitionFromRight = true; // forward page turn default
+    public int transitionFps = 24;
+
     [Serializable]
     public struct DeactivateAfterSteps
     {
@@ -345,7 +348,7 @@ public class PanelManager : MonoBehaviour
 
         StopVoice();
 
-        SceneManager.LoadScene(sceneName);
+        TransitionLoader.Go(sceneName, fromRight: transitionFromRight, fps: transitionFps);
     }
 
     private IEnumerator GrowAllPanelsThenLoad()

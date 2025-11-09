@@ -28,17 +28,17 @@ public class WinText : MonoBehaviour
 
     void Awake()
     {
-        // Make sure the particle runs even if Time.timeScale is zero
+        
         if (leavesFX != null)
         {
             var main = leavesFX.main;
 #if UNITY_2019_3_OR_NEWER
             main.useUnscaledTime = true;
 #endif
-            // Ensure object is active so Play actually runs
+           
             leavesFX.gameObject.SetActive(true);
 
-            // Optional safety: if no bursts are configured, do a small default burst
+            
             var emission = leavesFX.emission;
             if (!emission.enabled) emission.enabled = true;
         }
@@ -53,10 +53,10 @@ public class WinText : MonoBehaviour
         winRect.localScale = Vector3.one * 0.6f;
         winRect.localRotation = Quaternion.identity;
 
-        // Fire confetti before the sequence so the player sees it immediately
+        
         if (emitLeaves && leavesFX != null)
         {
-            // If you authored a Burst in the particle, Play is enough
+            
             if (emitCountOverride < 0) leavesFX.Play();
             else leavesFX.Emit(Mathf.Max(0, emitCountOverride));
         }
@@ -69,7 +69,7 @@ public class WinText : MonoBehaviour
         float t = 0f;
         while (t < popDuration)
         {
-            t += Time.unscaledDeltaTime; // unscaled so it still animates if game is paused
+            t += Time.unscaledDeltaTime; 
             float k = Mathf.Clamp01(t / popDuration);
 
             winGroup.alpha = Mathf.Lerp(0f, 1f, k);
