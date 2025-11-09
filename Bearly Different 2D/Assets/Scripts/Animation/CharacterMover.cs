@@ -1,20 +1,20 @@
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class CharacterMover : MonoBehaviour
 {
     public bool moving;
+
     [Header("Path")]
     public Transform[] points;
 
     [Header("Motion")]
-    [Min(0.01f)] public float speed = 3f;     // units per second
-    public bool loop = true;                  // loop back to the start
-    public bool pingPong = false;             // bounce back and forth
-    public float waitAtPoint = 0f;            // seconds to pause at each point
-    public AnimationCurve ease = AnimationCurve.Linear(0, 0, 1, 1); // optional easing
+    [Min(0.01f)] public float speed = 3f;
+    public bool loop = true;
+    public bool pingPong = false;
+    public float waitAtPoint = 0f;
+    public AnimationCurve ease = AnimationCurve.Linear(0, 0, 1, 1);
 
     [Header("Start/Stop")]
     public bool playOnStart = true;
@@ -22,23 +22,30 @@ public class CharacterMover : MonoBehaviour
     [Header("Enable Toggle")]
     public bool isEnabled = true;
 
-
     [Header("Events")]
     public UnityEvent onPathComplete;
 
-    int _dir = 1;          // forward (1) or backward (-1)
-    int _i = 0;            // current target index
+    int _dir = 1;
+    int _i = 0;
     bool _running;
 
+    [Header("Render + Animation")]
     public SpriteRenderer sr;
     public UnityEngine.UI.Image image;
+    public Animator animator; // ✅ optional animator
 
     public bool playNextStart;
     public bool playNextEnd;
     public PanelManager panelManager;
+
+    [Header("Shrink While Moving")]
+    public bool enableShrink = false;
+    public float shrinkSpeed = 1f;
+    public float minScale = 0.1f;
+    private bool _isActuallyMoving = false;
+
     void Start()
     {
-
         if (!moving) return;
 
         if (points == null || points.Length < 2)
@@ -48,18 +55,32 @@ public class CharacterMover : MonoBehaviour
             return;
         }
 
-        // Snap to first point at start
         transform.position = points[0].position;
 
         if (playOnStart) StartMoving();
+    }
 
+    void Update()
+    {
+        // shrink only while actively moving and allowed
+        if (enableShrink && _isActuallyMoving)
+        {
+            transform.localScale -= Vector3.one * shrinkSpeed * Time.deltaTime;
+            if (transform.localScale.x < minScale)
+                transform.localScale = Vector3.one * minScale;
+        }
+
+        // ✅ optional: keep Animator in sync
+        if (animator != null)
+            animator.SetBool("IsMoving", _isActuallyMoving);
     }
 
     public void StartMoving()
     {
         if (playNextStart) panelManager.ShowNextPanel();
-        if (!moving) return;
+        if (!moving) moving = true;
         if (_running) return;
+
         _running = true;
         StopAllCoroutines();
         StartCoroutine(MoveRoutine());
@@ -68,21 +89,21 @@ public class CharacterMover : MonoBehaviour
     public void StopMoving()
     {
         _running = false;
+        _isActuallyMoving = false;
+        if (animator != null)
+            animator.SetBool("IsMoving", false);
         StopAllCoroutines();
     }
 
-    System.Collections.IEnumerator MoveRoutine()
+    IEnumerator MoveRoutine()
     {
         while (true)
         {
             while (!isEnabled)
-            {
-                yield return null; // pause movement but don't break coroutine
-            }
+                yield return null;
 
             int next = _i + _dir;
 
-            // Handle end-of-path logic
             if (next < 0 || next >= points.Length)
             {
                 if (pingPong)
@@ -96,35 +117,41 @@ public class CharacterMover : MonoBehaviour
                 }
                 else
                 {
+                    StopMoving();
                     onPathComplete?.Invoke();
-                    _running = false;
                     yield break;
                 }
             }
 
-            // Travel from points[_i] to points[next] at constant speed with optional easing
             Vector3 a = points[_i].position;
             Vector3 b = points[next].position;
             float dist = Vector3.Distance(a, b);
-            
 
             float t = 0f;
+            _isActuallyMoving = true;
+            if (animator != null)
+                animator.SetBool("IsMoving", true);
+
             while (t < 1f)
             {
-                image.sprite = sr.sprite; 
+                if (image != null && sr != null)
+                    image.sprite = sr.sprite;
+
                 float duration = Mathf.Max(0.0001f, dist / speed);
                 t += Time.deltaTime / duration;
-                float k = ease.Evaluate(Mathf.Clamp01(t)); // apply easing to 0..1
+                float k = ease.Evaluate(Mathf.Clamp01(t));
                 transform.position = Vector3.LerpUnclamped(a, b, k);
                 yield return null;
             }
 
+            _isActuallyMoving = false;
+            if (animator != null)
+                animator.SetBool("IsMoving", false);
+
             if (playNextEnd) panelManager.ShowNextPanel();
 
-            // Arrived at next point
             _i = next;
 
-            // Optional wait
             if (waitAtPoint > 0f)
                 yield return new WaitForSeconds(waitAtPoint);
         }
@@ -145,4 +172,6 @@ public class CharacterMover : MonoBehaviour
         }
         if (points[^1]) Gizmos.DrawWireSphere(points[^1].position, 0.06f);
     }
+
+    public void EnableShrink(bool on) => enableShrink = on;
 }

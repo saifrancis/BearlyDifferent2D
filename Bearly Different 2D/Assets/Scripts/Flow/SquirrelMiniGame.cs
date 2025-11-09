@@ -22,7 +22,7 @@ public class SquirrelMiniGame : MonoBehaviour
     public float maxJumpInterval = 1.2f;
     public float branchShakeAmount = 5f;
     public float shakeDuration = 0.2f;
-    public float requiredPerfectTime = 6f;
+    public float requiredPerfectTime = 5f;
 
     [Header("Beehive Sprites")]
     public SpriteRenderer hiveSprite;
@@ -86,7 +86,7 @@ public class SquirrelMiniGame : MonoBehaviour
         {
             ToggleHelpPanel();
         }
-        if (helpPanel.activeInHierarchy == true) return;
+        //if (helpPanel.activeInHierarchy == true) return;
 
         if (gameWon) return;
 

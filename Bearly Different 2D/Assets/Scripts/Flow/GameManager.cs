@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Help")]
     [SerializeField] private GameObject helpPanel;     // assign in Inspector
-    [SerializeField] private bool helpStartsVisible = false;
+    //[SerializeField] private bool helpStartsVisible = false;
 
     [Header("Grid Panel")]
     [SerializeField] private GameObject gridPanel;     // assign in Inspector
@@ -47,13 +47,13 @@ public class GameManager : MonoBehaviour
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
         UpdateScoreUI();
 
-        if (helpPanel)
+        /*if (helpPanel)
         {
             helpPanel.SetActive(helpStartsVisible);   // init
             Time.timeScale = 0;
         }
         SetActiveBerry(gridManager.grid[currentRow, currentCol]);
-        UpdateScoreUI();
+        UpdateScoreUI();*/
     }
 
     void Update()
@@ -61,7 +61,7 @@ public class GameManager : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.H))
             ToggleHelpPanel();
 
-        if (helpPanel.activeInHierarchy) return;
+        //if (helpPanel.activeInHierarchy) return;
 
         if (levelComplete || isResolving) return;
 
@@ -97,7 +97,7 @@ public class GameManager : MonoBehaviour
         if (!helpPanel) return;
         bool next = !helpPanel.activeSelf;
         helpPanel.SetActive(next);
-        Time.timeScale = 1f;
+        //Time.timeScale = 1f;
 
        
     }

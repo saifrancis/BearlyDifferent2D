@@ -391,6 +391,10 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 37d2d8c50f0f2fd4e950f4b314e68ff3, type: 3}
   voiceVolume: 1
   voiceSource: {fileID: 0}
+  homeSceneName: 0HomePage
+  showVoiceOptInOnHome: 1
+  voiceOptInPanel: {fileID: 0}
+  voiceAssistToggleUI: {fileID: 0}
   useGloveInput: 1
   togglePanel: {fileID: 805929742}
   toggleKey: 104
@@ -1972,7 +1976,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1906565917
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -21,15 +21,31 @@ public class WinText : MonoBehaviour
 
     private Coroutine wiggleRoutine;
 
-    [Header("Particles (optional)")]
-    public ParticleSystem leavesFX;       // <— drag your LeafConfetti here
+    [Header("Particles")]
+    public ParticleSystem leavesFX;
     public bool emitLeaves = true;
     public int emitCountOverride = -1;
 
+    void Awake()
+    {
+        // Make sure the particle runs even if Time.timeScale is zero
+        if (leavesFX != null)
+        {
+            var main = leavesFX.main;
+#if UNITY_2019_3_OR_NEWER
+            main.useUnscaledTime = true;
+#endif
+            // Ensure object is active so Play actually runs
+            leavesFX.gameObject.SetActive(true);
+
+            // Optional safety: if no bursts are configured, do a small default burst
+            var emission = leavesFX.emission;
+            if (!emission.enabled) emission.enabled = true;
+        }
+    }
 
     public void PlayWin()
     {
-       
         if (wiggleRoutine != null) StopCoroutine(wiggleRoutine);
 
         winRect.gameObject.SetActive(true);
@@ -37,11 +53,12 @@ public class WinText : MonoBehaviour
         winRect.localScale = Vector3.one * 0.6f;
         winRect.localRotation = Quaternion.identity;
 
+        // Fire confetti before the sequence so the player sees it immediately
         if (emitLeaves && leavesFX != null)
         {
-            // If you set a Burst in the system, just Play():
+            // If you authored a Burst in the particle, Play is enough
             if (emitCountOverride < 0) leavesFX.Play();
-            else leavesFX.Emit(Mathf.Max(0, emitCountOverride)); // manual count
+            else leavesFX.Emit(Mathf.Max(0, emitCountOverride));
         }
 
         StartCoroutine(WinSequence());
@@ -49,36 +66,26 @@ public class WinText : MonoBehaviour
 
     IEnumerator WinSequence()
     {
-        // ✅ Fade + Pop at same time
         float t = 0f;
         while (t < popDuration)
         {
-            t += Time.deltaTime;
+            t += Time.unscaledDeltaTime; // unscaled so it still animates if game is paused
             float k = Mathf.Clamp01(t / popDuration);
 
-            // fade
             winGroup.alpha = Mathf.Lerp(0f, 1f, k);
-
-            // scale
             float scale = Mathf.Lerp(0.6f, popScale, k);
             winRect.localScale = Vector3.one * scale;
 
             yield return null;
         }
 
-        // settle scale
         winRect.localScale = Vector3.one;
-
-        // ✅ Start wiggle loop
         wiggleRoutine = StartCoroutine(WiggleLoop());
 
-        // Optional wait before continuing
         if (autoContinue)
         {
-            yield return new WaitForSeconds(continueDelay);
+            yield return new WaitForSecondsRealtime(continueDelay);
             Debug.Log("Continue Trigger Here");
-            // You can change scene here if desired:
-            // SceneManager.LoadScene("NextSceneHere");
         }
     }
 
@@ -86,7 +93,7 @@ public class WinText : MonoBehaviour
     {
         while (true)
         {
-            float angle = Mathf.Sin(Time.time * wiggleSpeed) * wiggleAngle;
+            float angle = Mathf.Sin(Time.unscaledTime * wiggleSpeed) * wiggleAngle;
             winRect.localRotation = Quaternion.Euler(0f, 0f, angle);
             yield return null;
         }

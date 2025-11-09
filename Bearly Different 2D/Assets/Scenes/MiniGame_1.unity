@@ -2826,7 +2826,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1076236323
 RectTransform:
   m_ObjectHideFlags: 0
@@ -3497,7 +3497,6 @@ MonoBehaviour:
   wiggleScale: 1.1
   wiggleAngle: 10
   helpPanel: {fileID: 1076236322}
-  helpStartsVisible: 1
   gridPanel: {fileID: 1161037727}
   wt: {fileID: 499550837}
   scoreFeedback: {fileID: 232006469}
