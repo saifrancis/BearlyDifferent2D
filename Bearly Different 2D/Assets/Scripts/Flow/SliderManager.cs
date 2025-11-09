@@ -274,11 +274,15 @@ public class SliderManager : MonoBehaviour
     {
         (pieces[i1], pieces[i2]) = (pieces[i2], pieces[i1]);
         (pieces[i1].localPosition, pieces[i2].localPosition) = (pieces[i2].localPosition, pieces[i1].localPosition);
-        emptyLocation = i1;
+
+        emptyLocation = i1;        
+        selectedIndex = i2;          
+        HighlightSelectedPiece();
 
         if (CheckCompletion())
             StartCoroutine(GoToNextScene());
     }
+
 
     private bool CheckCompletion()
     {
